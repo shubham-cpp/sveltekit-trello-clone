@@ -5,4 +5,6 @@
 </script>
 
 <Navbar />
-{@render children?.()}
+<main class="container mx-auto grow p-4">
+	{@render children?.()}
+</main>

@@ -5,5 +5,5 @@
 		"source.fixAll.eslint": "explicit"
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"cSpell.words": ["superforms", "Shubham", "Pawar"]
+	"cSpell.words": ["Pawar", "Shubham", "subsecond", "superforms", "unixepoch"]
 }
