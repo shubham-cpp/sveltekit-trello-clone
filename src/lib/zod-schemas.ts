@@ -32,3 +32,20 @@ export const passwordChangeSchema = z
 		path: ['confirmPassword']
 	});
 export type PasswordChangeFormSchema = typeof passwordChangeSchema;
+
+export const COLOR_VALUES = [
+	'bg-blue-600',
+	'bg-purple-600',
+	'bg-emerald-600',
+	'bg-amber-600',
+	'bg-rose-600',
+	'bg-sky-600',
+	'bg-indigo-600',
+	'bg-green-600'
+];
+
+export const editBoardSchema = z.object({
+	title: z.string().min(3, 'Title must be at least 3 characters'),
+	color: z.enum(COLOR_VALUES)
+});
+export type EditBoardFormSchema = typeof editBoardSchema;

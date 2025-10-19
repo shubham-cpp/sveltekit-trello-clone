@@ -9,6 +9,8 @@ type UpdateBoard = Pick<Board, 'id'> & Partial<Omit<Board, 'id' | 'isDeleted'>>;
 type UpdateBoardColumn = Pick<BoardColumn, 'id'> & Partial<Omit<BoardColumn, 'id'>>;
 type UpdateTask = Pick<BoardTask, 'id'> & Partial<Omit<BoardTask, 'id'>>;
 
+type BoardWithColumn = Board & { columns: BoardColumn[] };
+
 function getDefaultColumns(
 	boardId: string
 ): Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'>[] {
@@ -25,10 +27,10 @@ function getDefaultColumns(
 }
 
 export const boardQueries = {
-	async create(
+	async createWithDefaultColumns(
 		userId: string,
 		boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>
-	): Promise<undefined | { board: Board; boardColumns: BoardColumn[] }> {
+	): Promise<undefined | BoardWithColumn> {
 		try {
 			const [newBoard] = await db
 				.insert(board)
@@ -46,13 +48,13 @@ export const boardQueries = {
 				.values(getDefaultColumns(newBoard.id))
 				.returning();
 
-			return { boardColumns: newColumns, board: newBoard };
+			return { ...newBoard, columns: newColumns };
 		} catch (error) {
 			console.error('ERROR: while `create` in boards.\n', error);
 			return undefined;
 		}
 	},
-	async createWithDefaultColumns(
+	async create(
 		userId: string,
 		boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>
 	): Promise<undefined | Board> {
@@ -84,12 +86,23 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async getById(userId: string, boardId: string, onlyDeleted = false): Promise<undefined | Board> {
+	async getWithColumnsById(
+		userId: string,
+		boardId: string,
+		onlyDeleted = false
+	): Promise<undefined | BoardWithColumn> {
 		try {
-			return await db.query.board.findFirst({
+			const foundBoard = await db.query.board.findFirst({
 				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
 					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, onlyDeleted))
 			});
+			if (!foundBoard) return undefined;
+
+			const columns = await db.query.boardColumn.findMany({
+				where: ({ boardId: bId }, { eq }) => eq(bId, boardId)
+			});
+
+			return { ...foundBoard, columns };
 		} catch (error) {
 			console.error('ERROR: while `getById` in boards.\n', error);
 			return undefined;

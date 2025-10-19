@@ -61,7 +61,7 @@
 			</Button>
 		</div>
 		<!-- Search Bar -->
-		<form use:enhance method="get">
+		<form method="get">
 			<ButtonGroup.Root class="pl-6">
 				<Input placeholder="Search boards..." />
 				<Button type="submit" variant="outline" size="icon" aria-label="Search">

@@ -32,4 +32,5 @@
 	<BoardStats boards={data.boards} />
 	<BoardFilters {formId} {viewMode} {onViewModeChange} />
 	<BoardList boards={data.boards} {viewMode} />
+	<!-- TODO: implement Table view(list-view) -->
 </div>
