@@ -9,17 +9,59 @@ type UpdateBoard = Pick<Board, 'id'> & Partial<Omit<Board, 'id' | 'isDeleted'>>;
 type UpdateBoardColumn = Pick<BoardColumn, 'id'> & Partial<Omit<BoardColumn, 'id'>>;
 type UpdateTask = Pick<BoardTask, 'id'> & Partial<Omit<BoardTask, 'id'>>;
 
+function getDefaultColumns(
+	boardId: string
+): Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'>[] {
+	const cols = [
+		{ title: 'Todo', sort_order: 0 },
+		{ title: 'In Progress', sort_order: 1 },
+		{ title: 'Review', sort_order: 2 },
+		{ title: 'Done', sort_order: 3 }
+	] as const;
+
+	return cols.map(
+		(c): Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'> => ({ ...c, boardId })
+	);
+}
+
 export const boardQueries = {
 	async create(
-		user: User,
+		userId: string,
+		boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>
+	): Promise<undefined | { board: Board; boardColumns: BoardColumn[] }> {
+		try {
+			const [newBoard] = await db
+				.insert(board)
+				.values({
+					...(pickBy(boardData, isNotNil) as Board),
+					userId: userId,
+					isDeleted: false
+				})
+				.returning();
+
+			if (!newBoard) return undefined;
+
+			const newColumns = await db
+				.insert(boardColumn)
+				.values(getDefaultColumns(newBoard.id))
+				.returning();
+
+			return { boardColumns: newColumns, board: newBoard };
+		} catch (error) {
+			console.error('ERROR: while `create` in boards.\n', error);
+			return undefined;
+		}
+	},
+	async createWithDefaultColumns(
+		userId: string,
 		boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>
 	): Promise<undefined | Board> {
 		try {
 			const [newBoard] = await db
 				.insert(board)
 				.values({
-					...boardData,
-					userId: user.id,
+					...(pickBy(boardData, isNotNil) as Board),
+					userId: userId,
 					isDeleted: false
 				})
 				.returning();
@@ -30,11 +72,11 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async getAll(user: User, onlyDeleted = false): Promise<undefined | Board[]> {
+	async getAll(userId: string, onlyDeleted = false): Promise<undefined | Board[]> {
 		try {
 			return await db.query.board.findMany({
-				where: ({ userId, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(isDeleted, onlyDeleted)),
+				where: ({ userId: dbUserId, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(isDeleted, onlyDeleted)),
 				orderBy: ({ updatedAt }, { desc }) => desc(updatedAt)
 			});
 		} catch (error) {
@@ -42,22 +84,22 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async getById(user: User, boardId: string, onlyDeleted = false): Promise<undefined | Board> {
+	async getById(userId: string, boardId: string, onlyDeleted = false): Promise<undefined | Board> {
 		try {
 			return await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, onlyDeleted))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, onlyDeleted))
 			});
 		} catch (error) {
 			console.error('ERROR: while `getById` in boards.\n', error);
 			return undefined;
 		}
 	},
-	async unDeleteById(user: User, boardId: string): Promise<undefined | Board> {
+	async unDeleteById(userId: string, boardId: string): Promise<undefined | Board> {
 		try {
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, true))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, true))
 			});
 
 			if (!foundBoard) return undefined;
@@ -76,11 +118,11 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async deleteById(user: User, boardId: string): Promise<undefined | Board> {
+	async deleteById(userId: string, boardId: string): Promise<undefined | Board> {
 		try {
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
 			});
 
 			if (!foundBoard) return undefined;
@@ -99,12 +141,12 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async updateById(user: User, boardObj: UpdateBoard): Promise<undefined | Board> {
+	async updateById(userId: string, boardObj: UpdateBoard): Promise<undefined | Board> {
 		try {
 			const updatedBoardObj = pickBy(boardObj, isNotNil);
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardObj.id), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardObj.id), eq(isDeleted, false))
 			});
 			if (!foundBoard) return undefined;
 
@@ -123,11 +165,11 @@ export const boardQueries = {
 } as const;
 
 export const boardColumnQueries = {
-	async getAll(user: User, boardId: string): Promise<undefined | BoardColumn[]> {
+	async getAll(userId: string, boardId: string): Promise<undefined | BoardColumn[]> {
 		try {
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
 			});
 
 			if (!foundBoard) return undefined;
@@ -141,14 +183,14 @@ export const boardColumnQueries = {
 			return undefined;
 		}
 	},
-	async getById(user: User, columnId: string): Promise<undefined | BoardColumn> {
+	async getById(userId: string, columnId: string): Promise<undefined | BoardColumn> {
 		try {
 			const result = await db
 				.select()
 				.from(boardColumn)
 				.innerJoin(board, eq(boardColumn.boardId, board.id))
 				.where(
-					and(eq(boardColumn.id, columnId), eq(board.userId, user.id), eq(board.isDeleted, false))
+					and(eq(boardColumn.id, columnId), eq(board.userId, userId), eq(board.isDeleted, false))
 				)
 				.get();
 
@@ -161,14 +203,14 @@ export const boardColumnQueries = {
 		}
 	},
 	async create(
-		user: User,
+		userId: string,
 		boardId: string,
 		columnData: Omit<BoardColumn, 'id' | 'boardId' | 'createdAt' | 'updatedAt'>
 	): Promise<undefined | BoardColumn> {
 		try {
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
 			});
 
 			if (!foundBoard) return undefined;
@@ -188,7 +230,7 @@ export const boardColumnQueries = {
 			return undefined;
 		}
 	},
-	async updateById(user: User, columnObj: UpdateBoardColumn): Promise<undefined | BoardColumn> {
+	async updateById(userId: string, columnObj: UpdateBoardColumn): Promise<undefined | BoardColumn> {
 		try {
 			const updatedColumnObj = pickBy(columnObj, isNotNil);
 
@@ -199,7 +241,7 @@ export const boardColumnQueries = {
 				.where(
 					and(
 						eq(boardColumn.id, columnObj.id),
-						eq(board.userId, user.id),
+						eq(board.userId, userId),
 						eq(board.isDeleted, false)
 					)
 				)
@@ -220,14 +262,14 @@ export const boardColumnQueries = {
 			return undefined;
 		}
 	},
-	async deleteById(user: User, columnId: string): Promise<undefined | BoardColumn> {
+	async deleteById(userId: string, columnId: string): Promise<undefined | BoardColumn> {
 		try {
 			const result = await db
 				.select()
 				.from(boardColumn)
 				.innerJoin(board, eq(boardColumn.boardId, board.id))
 				.where(
-					and(eq(boardColumn.id, columnId), eq(board.userId, user.id), eq(board.isDeleted, false))
+					and(eq(boardColumn.id, columnId), eq(board.userId, userId), eq(board.isDeleted, false))
 				)
 				.get();
 
@@ -247,11 +289,15 @@ export const boardColumnQueries = {
 } as const;
 
 export const taskQueries = {
-	async getAll(user: User, boardId: string, columnId?: string): Promise<undefined | BoardTask[]> {
+	async getAll(
+		userId: string,
+		boardId: string,
+		columnId?: string
+	): Promise<undefined | BoardTask[]> {
 		try {
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
 			});
 
 			if (!foundBoard) return undefined;
@@ -273,14 +319,14 @@ export const taskQueries = {
 			return undefined;
 		}
 	},
-	async getById(user: User, taskId: string): Promise<undefined | BoardTask> {
+	async getById(userId: string, taskId: string): Promise<undefined | BoardTask> {
 		try {
 			// Get the task and join with board to check ownership
 			const result = await db
 				.select()
 				.from(task)
 				.innerJoin(board, eq(task.boardId, board.id))
-				.where(and(eq(task.id, taskId), eq(board.userId, user.id), eq(board.isDeleted, false)))
+				.where(and(eq(task.id, taskId), eq(board.userId, userId), eq(board.isDeleted, false)))
 				.get();
 
 			if (!result) return undefined;
@@ -292,7 +338,7 @@ export const taskQueries = {
 		}
 	},
 	async create(
-		user: User,
+		userId: string,
 		boardId: string,
 		columnId: string,
 		taskData: Omit<
@@ -303,8 +349,8 @@ export const taskQueries = {
 		try {
 			// First check if the user owns the board
 			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId, id, isDeleted }, { eq, and }) =>
-					and(eq(userId, user.id), eq(id, boardId), eq(isDeleted, false))
+				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
 			});
 
 			if (!foundBoard) return undefined;
@@ -324,7 +370,7 @@ export const taskQueries = {
 					...taskData,
 					boardId,
 					boardColumnId: columnId,
-					owner: user.id
+					owner: userId
 				})
 				.returning();
 
@@ -334,7 +380,7 @@ export const taskQueries = {
 			return undefined;
 		}
 	},
-	async updateById(user: User, taskObj: UpdateTask): Promise<undefined | BoardTask> {
+	async updateById(userId: string, taskObj: UpdateTask): Promise<undefined | BoardTask> {
 		try {
 			const updatedTaskObj = pickBy(taskObj, isNotNil);
 
@@ -343,7 +389,7 @@ export const taskQueries = {
 				.select()
 				.from(task)
 				.innerJoin(board, eq(task.boardId, board.id))
-				.where(and(eq(task.id, taskObj.id), eq(board.userId, user.id), eq(board.isDeleted, false)))
+				.where(and(eq(task.id, taskObj.id), eq(board.userId, userId), eq(board.isDeleted, false)))
 				.get();
 
 			if (!result) return undefined;
@@ -361,14 +407,14 @@ export const taskQueries = {
 			return undefined;
 		}
 	},
-	async deleteById(user: User, taskId: string): Promise<undefined | BoardTask> {
+	async deleteById(userId: string, taskId: string): Promise<undefined | BoardTask> {
 		try {
 			// Get the task and join with board to check ownership
 			const result = await db
 				.select()
 				.from(task)
 				.innerJoin(board, eq(task.boardId, board.id))
-				.where(and(eq(task.id, taskId), eq(board.userId, user.id), eq(board.isDeleted, false)))
+				.where(and(eq(task.id, taskId), eq(board.userId, userId), eq(board.isDeleted, false)))
 				.get();
 
 			if (!result) return undefined;
@@ -383,7 +429,7 @@ export const taskQueries = {
 		}
 	},
 	async moveToColumn(
-		user: User,
+		userId: string,
 		taskId: string,
 		newColumnId: string
 	): Promise<undefined | BoardTask> {
@@ -393,7 +439,7 @@ export const taskQueries = {
 				.select()
 				.from(task)
 				.innerJoin(board, eq(task.boardId, board.id))
-				.where(and(eq(task.id, taskId), eq(board.userId, user.id), eq(board.isDeleted, false)))
+				.where(and(eq(task.id, taskId), eq(board.userId, userId), eq(board.isDeleted, false)))
 				.get();
 
 			if (!taskResult) return undefined;
