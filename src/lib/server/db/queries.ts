@@ -2,7 +2,7 @@ import type { User } from 'better-auth';
 import { db } from '.';
 import type { Board, BoardColumn, BoardTask } from './types';
 import { board, boardColumn, task } from './schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, asc } from 'drizzle-orm';
 import { pickBy, isNotNil } from 'es-toolkit';
 
 type UpdateBoard = Pick<Board, 'id'> & Partial<Omit<Board, 'id' | 'isDeleted'>>;
@@ -10,6 +10,7 @@ type UpdateBoardColumn = Pick<BoardColumn, 'id'> & Partial<Omit<BoardColumn, 'id
 type UpdateTask = Pick<BoardTask, 'id'> & Partial<Omit<BoardTask, 'id'>>;
 
 type BoardWithColumn = Board & { columns: BoardColumn[] };
+type BoardWithColumnAndTasks = Board & { columns: (BoardColumn & { tasks: BoardTask })[] };
 
 function getDefaultColumns(
 	boardId: string
@@ -86,23 +87,40 @@ export const boardQueries = {
 			return undefined;
 		}
 	},
-	async getWithColumnsById(
-		userId: string,
-		boardId: string,
-		onlyDeleted = false
-	): Promise<undefined | BoardWithColumn> {
+	async getWithColumnsAndTasksById(userId: string, boardId: string, onlyDeleted = false) {
 		try {
-			const foundBoard = await db.query.board.findFirst({
-				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, onlyDeleted))
+			return await db.query.board.findFirst({
+				where: (b, { eq, and }) =>
+					and(eq(b.userId, userId), eq(b.id, boardId), eq(b.isDeleted, onlyDeleted)),
+				with: {
+					columns: {
+						orderBy: (bc, { asc }) => asc(bc.sort_order),
+						with: {
+							tasks: {
+								orderBy: (t, { asc }) => asc(t.sort_order),
+								with: {
+									assigneeUser: {
+										columns: {
+											id: true,
+											name: true,
+											email: true,
+											image: true
+										}
+									},
+									ownerUser: {
+										columns: {
+											id: true,
+											name: true,
+											email: true,
+											image: true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
 			});
-			if (!foundBoard) return undefined;
-
-			const columns = await db.query.boardColumn.findMany({
-				where: ({ boardId: bId }, { eq }) => eq(bId, boardId)
-			});
-
-			return { ...foundBoard, columns };
 		} catch (error) {
 			console.error('ERROR: while `getById` in boards.\n', error);
 			return undefined;
@@ -178,19 +196,19 @@ export const boardQueries = {
 } as const;
 
 export const boardColumnQueries = {
-	async getAll(userId: string, boardId: string): Promise<undefined | BoardColumn[]> {
+	async getAll(userId: string, boardId: string) {
 		try {
 			const foundBoard = await db.query.board.findFirst({
 				where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false))
+					and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false)),
+				with: {
+					columns: {
+						orderBy: ({ sort_order }, { asc }) => asc(sort_order)
+					}
+				}
 			});
 
-			if (!foundBoard) return undefined;
-
-			return await db.query.boardColumn.findMany({
-				where: ({ boardId: columnBoardId }, { eq }) => eq(columnBoardId, boardId),
-				orderBy: ({ sort_order }, { asc }) => asc(sort_order)
-			});
+			return foundBoard;
 		} catch (error) {
 			console.error('ERROR: while `getAll` in boardColumns.\n', error);
 			return undefined;

@@ -8,13 +8,14 @@
 	import EditBoardTitle from './edit-board-title.svelte';
 	import Logo from './logo.svelte';
 	import UserProfileMenu from './user-profile-menu.svelte';
+	import FilterDialog from './filter-dialog.svelte';
 
-	const pathname = $derived(page.url.pathname);
+	const isRouteBoard = $derived(page.url.pathname.startsWith('/boards'));
 </script>
 
 <header class="sticky top-0 z-50 border-b bg-neutral-50 p-4 backdrop-blur-md dark:bg-neutral-900">
 	<nav class="flex items-center justify-between">
-		{#if pathname.startsWith('/boards')}
+		{#if isRouteBoard}
 			<div class="flex items-center gap-x-2">
 				<a href="/dashboard" class={buttonVariants({ variant: 'outline' })}>
 					<ArrowBigLeftDash /> <span class="hidden sm:inline">Back to dashboard</span>
@@ -24,7 +25,7 @@
 				<div class="flex items-center gap-x-2">
 					<TrelloIcon class="size-6 text-green-600 dark:text-green-500" aria-label="logo icon" />
 					<div class="flex items-center space-x-1 truncate sm:space-x-2">
-						<p class="text-lg">{boardDetails.title}</p>
+						<p class="hidden text-lg sm:inline">{boardDetails.title}</p>
 						<EditBoardTitle />
 					</div>
 				</div>
@@ -33,6 +34,9 @@
 			<Logo />
 		{/if}
 		<div class="flex items-center gap-x-2">
+			{#if isRouteBoard}
+				<FilterDialog />
+			{/if}
 			<UserProfileMenu />
 			<ThemeToggle />
 		</div>

@@ -5,5 +5,13 @@
 		"source.fixAll.eslint": "explicit"
 	},
 	"typescript.tsdk": "node_modules/typescript/lib",
-	"cSpell.words": ["Pawar", "Shubham", "subsecond", "superforms", "unixepoch"]
+	"cSpell.words": [
+		"dndzone",
+		"dragabble",
+		"Pawar",
+		"Shubham",
+		"subsecond",
+		"superforms",
+		"unixepoch"
+	]
 }

@@ -1,15 +1,14 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { boardDetails } from '$lib/states/navbar-board-details.svelte';
+	import { cn } from '$lib/utils';
 	import { COLOR_VALUES } from '$lib/zod-schemas';
 	import EllipsisIcon from '@lucide/svelte/icons/ellipsis';
-	import { tick } from 'svelte';
-	import { invalidate, invalidateAll } from '$app/navigation';
-	import { enhance } from '$app/forms';
-	import { buttonVariants } from '../ui/button';
-	import { cn } from '$lib/utils';
 	import type { SubmitFunction } from '@sveltejs/kit';
+	import { tick } from 'svelte';
+	import { buttonVariants } from '../ui/button';
 
 	let title = $state(boardDetails.title ?? '');
 	let color = $state(boardDetails.color ?? COLOR_VALUES[0]);
@@ -38,7 +37,11 @@
 </script>
 
 <Dialog.Root bind:open={dialogOpen}>
-	<Dialog.Trigger class={buttonVariants({ variant: 'ghost', size: 'sm' })} aria-label="Edit board">
+	<Dialog.Trigger
+		class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), !title?.trim() && 'hidden')}
+		aria-label="Edit board"
+		title="Edit Board"
+	>
 		<EllipsisIcon />
 	</Dialog.Trigger>
 

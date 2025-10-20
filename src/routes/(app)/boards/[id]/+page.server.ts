@@ -12,7 +12,7 @@ export const load: PageServerLoad = async (events) => {
 	if (!boardId) error(404, { message: 'ID is required parameter' });
 	if (!userId) redirect(307, '/login');
 
-	const board = await boardQueries.getWithColumnsById(userId, boardId);
+	const board = await boardQueries.getWithColumnsAndTasksById(userId, boardId);
 
 	if (!board) error(404, { message: 'No board found for this ID' });
 

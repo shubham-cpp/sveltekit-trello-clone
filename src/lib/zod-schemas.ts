@@ -8,16 +8,16 @@ export const loginSchema = z.object({
 export type LoginFormSchema = typeof loginSchema;
 
 export const signupSchema = z.object({
-	firstName: z.string().min(2, 'First name must be at least 2 characters'),
-	lastName: z.string().min(2, 'Last name must be at least 2 characters'),
+	firstName: z.string().trim().min(2, 'First name must be at least 2 characters'),
+	lastName: z.string().trim().min(2, 'Last name must be at least 2 characters'),
 	email: z.email(),
 	password: z.string().min(8, 'Password must be at least 8 characters')
 });
 export type SignUpFormSchema = typeof signupSchema;
 
 export const profileUpdateSchema = z.object({
-	firstName: z.string().min(2, 'First name must be at least 2 characters'),
-	lastName: z.string().min(2, 'Last name must be at least 2 characters')
+	firstName: z.string().trim().min(2, 'First name must be at least 2 characters'),
+	lastName: z.string().trim().min(2, 'Last name must be at least 2 characters')
 });
 export type ProfileUpdateFormSchema = typeof profileUpdateSchema;
 
