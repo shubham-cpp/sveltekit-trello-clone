@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { nanoid } from 'nanoid';
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, index } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
 	id: text('id').primaryKey(),
@@ -74,76 +74,155 @@ export const verification = sqliteTable('verification', {
 		.notNull()
 });
 
-export const board = sqliteTable('board', {
-	id: text().primaryKey().$defaultFn(nanoid),
+export const board = sqliteTable(
+	'board',
+	{
+		id: text().primaryKey().$defaultFn(nanoid),
 
-	title: text().notNull(),
-	description: text(),
-	color: text().default('bg-blue-500'),
-	isDeleted: integer({ mode: 'boolean' }).default(false),
+		title: text().notNull(),
+		description: text(),
+		color: text().default('bg-blue-500'),
+		isDeleted: integer({ mode: 'boolean' }).default(false),
 
-	userId: text()
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
+		userId: text()
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
 
-	createdAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.notNull(),
-	updatedAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => ({
+		// Index for fetching user's boards
+		userIdIdx: index('board_user_id_idx').on(table.userId),
+		// Composite index for filtering non-deleted boards by user
+		userIdIsDeletedIdx: index('board_user_id_is_deleted_idx').on(table.userId, table.isDeleted)
+	})
+);
 
 /**
  * In the video, this is referred to as "columns" table
  */
-export const boardColumn = sqliteTable('board_column', {
-	id: text().primaryKey().$defaultFn(nanoid),
+export const boardColumn = sqliteTable(
+	'board_column',
+	{
+		id: text().primaryKey().$defaultFn(nanoid),
 
-	title: text().notNull(),
-	sort_order: integer().default(0), // to handle the order of columns. Like should "TODO" column display before "WORK" column, etc
+		title: text().notNull(),
+		sort_order: integer().default(0), // to handle the order of columns. Like should "TODO" column display before "WORK" column, etc
 
-	boardId: text()
-		.notNull()
-		.references(() => board.id, { onDelete: 'cascade' }),
+		boardId: text()
+			.notNull()
+			.references(() => board.id, { onDelete: 'cascade' }),
 
-	createdAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.notNull(),
-	updatedAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => ({
+		// Index for fetching columns by board (critical for your main query)
+		boardIdIdx: index('board_column_board_id_idx').on(table.boardId),
+		// Composite index for fetching and sorting columns by board
+		boardIdSortOrderIdx: index('board_column_board_id_sort_order_idx').on(
+			table.boardId,
+			table.sort_order
+		)
+	})
+);
 
-export const task = sqliteTable('task', {
-	id: text().primaryKey().$defaultFn(nanoid),
+export const task = sqliteTable(
+	'task',
+	{
+		id: text().primaryKey().$defaultFn(nanoid),
 
-	title: text().notNull(),
-	description: text(),
+		title: text().notNull(),
+		description: text(),
 
-	sort_order: integer().default(0),
-	due_date: integer({ mode: 'timestamp_ms' }),
-	priority: text({ enum: ['low', 'medium', 'high'] }).default('low'),
+		sort_order: integer().default(0),
+		due_date: integer({ mode: 'timestamp_ms' }),
+		priority: text({ enum: ['low', 'medium', 'high'] }).default('low'),
 
-	owner: text()
-		.notNull()
-		.references(() => user.id, { onDelete: 'cascade' }),
-	assignee: text().references(() => user.id, { onDelete: 'set null' }),
+		owner: text()
+			.notNull()
+			.references(() => user.id, { onDelete: 'cascade' }),
+		assignee: text().references(() => user.id, { onDelete: 'set null' }),
 
-	boardId: text()
-		.notNull()
-		.references(() => board.id, { onDelete: 'cascade' }),
-	boardColumnId: text()
-		.notNull()
-		.references(() => boardColumn.id, { onDelete: 'cascade' }),
+		boardId: text()
+			.notNull()
+			.references(() => board.id, { onDelete: 'cascade' }),
+		boardColumnId: text()
+			.notNull()
+			.references(() => boardColumn.id, { onDelete: 'cascade' }),
 
-	createdAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.notNull(),
-	updatedAt: integer({ mode: 'timestamp_ms' })
-		.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
-		.$onUpdate(() => /* @__PURE__ */ new Date())
-		.notNull()
-});
+		createdAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.notNull(),
+		updatedAt: integer({ mode: 'timestamp_ms' })
+			.default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+			.$onUpdate(() => /* @__PURE__ */ new Date())
+			.notNull()
+	},
+	(table) => ({
+		// Index for fetching tasks by board
+		boardIdIdx: index('task_board_id_idx').on(table.boardId),
+		// Index for fetching tasks by column (critical for your main query)
+		boardColumnIdIdx: index('task_board_column_id_idx').on(table.boardColumnId),
+		// Composite index for fetching and sorting tasks by column
+		boardColumnIdSortOrderIdx: index('task_board_column_id_sort_order_idx').on(
+			table.boardColumnId,
+			table.sort_order
+		),
+		// Index for fetching tasks by owner
+		ownerIdx: index('task_owner_idx').on(table.owner),
+		// Index for fetching tasks by assignee
+		assigneeIdx: index('task_assignee_idx').on(table.assignee),
+		// Index for filtering by priority
+		priorityIdx: index('task_priority_idx').on(table.priority),
+		// Index for filtering/sorting by due date
+		dueDateIdx: index('task_due_date_idx').on(table.due_date)
+	})
+);
+
+// Relations
+export const boardRelations = relations(board, ({ many, one }) => ({
+	columns: many(boardColumn),
+	owner: one(user, {
+		fields: [board.userId],
+		references: [user.id]
+	})
+}));
+
+export const boardColumnRelations = relations(boardColumn, ({ many, one }) => ({
+	tasks: many(task),
+	board: one(board, {
+		fields: [boardColumn.boardId],
+		references: [board.id]
+	})
+}));
+
+export const taskRelations = relations(task, ({ one }) => ({
+	column: one(boardColumn, {
+		fields: [task.boardColumnId],
+		references: [boardColumn.id]
+	}),
+	board: one(board, {
+		fields: [task.boardId],
+		references: [board.id]
+	}),
+	ownerUser: one(user, {
+		fields: [task.owner],
+		references: [user.id]
+	}),
+	assigneeUser: one(user, {
+		fields: [task.assignee],
+		references: [user.id]
+	})
+}));
