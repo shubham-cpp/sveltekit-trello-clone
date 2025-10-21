@@ -1,10 +1,10 @@
 interface BoardDetails {
-	title?: string;
-	color?: string;
-	filterCount: number;
+	title?: string
+	color?: string
+	filterCount: number
 }
 export const boardDetails = $state<BoardDetails>({
 	title: undefined,
 	color: undefined,
-	filterCount: 0
-});
+	filterCount: 0,
+})

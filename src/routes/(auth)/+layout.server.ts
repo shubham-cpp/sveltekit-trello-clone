@@ -1,9 +1,9 @@
-import { redirect } from '@sveltejs/kit';
-import type { LayoutServerLoad } from './$types';
+import type { LayoutServerLoad } from './$types'
+import { redirect } from '@sveltejs/kit'
 
 export const load: LayoutServerLoad = async (events) => {
-	if (events.locals.user?.id) {
-		redirect(307, '/dashboard');
-	}
-	return {};
-};
+  if (events.locals.user?.id) {
+    redirect(307, '/dashboard')
+  }
+  return {}
+}

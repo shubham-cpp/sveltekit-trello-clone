@@ -1,10 +1,10 @@
-<script lang="ts">
-	import Navbar from '$lib/components/navbar/navbar.svelte';
+<script lang='ts'>
+  import Navbar from '$lib/components/navbar/navbar.svelte'
 
-	let { children } = $props();
+  const { children } = $props()
 </script>
 
 <Navbar />
-<main class="container mx-auto grow p-4">
-	{@render children?.()}
+<main class='container mx-auto grow p-4'>
+  {@render children?.()}
 </main>
