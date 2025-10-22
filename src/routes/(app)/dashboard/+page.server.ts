@@ -3,7 +3,6 @@ import { boardQueries } from '$lib/server/db/queries'
 import { fail, redirect } from '@sveltejs/kit'
 
 export const load: PageServerLoad = async (events) => {
-  console.log(events.locals.user)
   const { email, id, name } = events?.locals?.user ?? {}
 
   if (!id)
@@ -21,12 +20,14 @@ export const actions = {
     if (!userId)
       return fail(403, 'You don\'t have access')
     try {
-      const res = await boardQueries.createWithDefaultColumns(userId, {
+      await boardQueries.createWithDefaultColumns(userId, {
         title: 'New Board',
         description: 'This is a demo board',
         color: null,
       })
     }
-    catch (error) {}
+    catch (error) {
+      console.error('ERROR: while submitting form action for `create-new-board`', error)
+    }
   },
 } satisfies Actions

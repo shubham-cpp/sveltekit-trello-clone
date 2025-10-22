@@ -38,7 +38,9 @@
 
 <Dialog.Root bind:open={dialogOpen}>
   <Dialog.Trigger
-    class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), !title?.trim() && `hidden`)}
+    class={cn(buttonVariants({ variant: 'ghost', size: 'sm' }), !title?.trim() && `
+      hidden
+    `)}
     aria-label='Edit board'
     title='Edit Board'
   >
@@ -51,7 +53,9 @@
       <Dialog.Description>Change the board title and color</Dialog.Description>
     </Dialog.Header>
 
-    <form method='POST' action='?/updateBoard' use:enhance={handleEnhance} class='space-y-4'>
+    <form method='POST' action='?/updateBoard' use:enhance={handleEnhance} class='
+      space-y-4
+    '>
       <div>
         <label for='title' class='block text-sm font-medium'>Title</label>
         <Input id='title' name='title' bind:value={title} class='mt-1 w-full' />
@@ -61,7 +65,9 @@
         <label class='block text-sm font-medium'>Color</label>
         <div class='mt-2 grid grid-cols-4 gap-2'>
           {#each COLOR_VALUES as c, i}
-            <label for={`color-${i}`} class='flex cursor-pointer items-center justify-center'>
+            <label for={`color-${i}`} class='
+              flex cursor-pointer items-center justify-center
+            '>
               <input
                 id={`color-${i}`}
                 type='radio'

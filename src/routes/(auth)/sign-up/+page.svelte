@@ -1,25 +1,23 @@
 <script lang='ts'>
-  import type { SignUpFormSchema } from '$lib/zod-schemas'
-  import type { Infer } from 'sveltekit-superforms'
+  import type { PageProps } from './$types'
   import { goto } from '$app/navigation'
   import { authClient } from '$lib/auth-client'
   import * as Form from '$lib/components/ui/form/index.js'
   import { Input } from '$lib/components/ui/input/index.js'
   import { signupSchema } from '$lib/zod-schemas'
-  import { get } from 'svelte/store'
+  import { toast } from 'svelte-sonner'
   import { superForm } from 'sveltekit-superforms'
   import { zod4Client as zodClient } from 'sveltekit-superforms/adapters'
 
-  const { data } = $props()
+  const { data }: PageProps = $props()
 
-  const form = superForm<Infer<SignUpFormSchema>>(data.form, {
+  const form = superForm(data.form, {
     validators: zodClient(signupSchema),
-    onResult: async ({ result }) => {
-      if (result.type !== 'success')
+    onUpdated: async ({ form }) => {
+      if (!form.valid)
         return
       try {
-        // eslint-disable-next-line no-use-before-define
-        const { firstName, lastName, email, password } = get(formData)
+        const { firstName, lastName, email, password } = form.data
 
         const { error } = await authClient.signUp.email({
           name: `${firstName} ${lastName}`,
@@ -31,8 +29,10 @@
 
         await goto('/login')
       }
-      catch (err) {
-        console.error('Sign up failed', err)
+      catch {
+        toast.error('Server Error', {
+          description: 'Some error occurred while sign-up. Please try again later',
+        })
       }
     },
   })

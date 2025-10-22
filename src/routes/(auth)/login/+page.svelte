@@ -1,6 +1,5 @@
 <script lang='ts'>
   import type { LoginFormSchema } from '$lib/zod-schemas'
-  import type { Infer } from 'sveltekit-superforms'
   import { goto } from '$app/navigation'
   import { authClient } from '$lib/auth-client.js'
   import * as Form from '$lib/components/ui/form/index.js'
@@ -12,7 +11,7 @@
 
   const { data } = $props()
 
-  const form = superForm<Infer<LoginFormSchema>>(data.form, {
+  const form = superForm<LoginFormSchema>(data.form, {
     validators: zodClient(loginSchema),
     async onResult({ result }) {
       if (result.type !== 'success')

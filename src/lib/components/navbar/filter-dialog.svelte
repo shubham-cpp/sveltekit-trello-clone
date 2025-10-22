@@ -41,7 +41,15 @@
             type='button'
             variant={priorities.has(pr) ? 'default' : 'outline'}
             id={`priority-item-${pr}`}
-            onclick={() => (priorities.has(pr) ? priorities.delete(pr) : priorities.add(pr))}
+            onclick={() => {
+              if (priorities.has(pr)) {
+                // eslint-disable-next-line drizzle/enforce-delete-with-where
+                priorities.delete(pr)
+              }
+              else {
+                priorities.add(pr)
+              }
+            }}
           >{pr}</Button
           >
         {/each}

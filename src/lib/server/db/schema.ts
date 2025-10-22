@@ -1,3 +1,4 @@
+import { PRIORITY_VALUES } from '$lib/zod-schemas'
 import { relations, sql } from 'drizzle-orm'
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { nanoid } from 'nanoid'
@@ -96,12 +97,12 @@ export const board = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  table => ({
+  t => [
     // Index for fetching user's boards
-    userIdIdx: index('board_user_id_idx').on(table.userId),
+    index('board_user_id_idx').on(t.userId),
     // Composite index for filtering non-deleted boards by user
-    userIdIsDeletedIdx: index('board_user_id_is_deleted_idx').on(table.userId, table.isDeleted),
-  }),
+    index('board_user_id_is_deleted_idx').on(t.userId, t.isDeleted),
+  ],
 )
 
 /**
@@ -127,15 +128,15 @@ export const boardColumn = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  table => ({
+  t => [
     // Index for fetching columns by board (critical for your main query)
-    boardIdIdx: index('board_column_board_id_idx').on(table.boardId),
+    index('board_column_board_id_idx').on(t.boardId),
     // Composite index for fetching and sorting columns by board
-    boardIdSortOrderIdx: index('board_column_board_id_sort_order_idx').on(
-      table.boardId,
-      table.sort_order,
+    index('board_column_board_id_sort_order_idx').on(
+      t.boardId,
+      t.sort_order,
     ),
-  }),
+  ],
 )
 
 export const task = sqliteTable(
@@ -148,7 +149,7 @@ export const task = sqliteTable(
 
     sort_order: integer().default(0),
     due_date: integer({ mode: 'timestamp_ms' }),
-    priority: text({ enum: ['low', 'medium', 'high'] }).default('low'),
+    priority: text({ enum: PRIORITY_VALUES }).default('low'),
 
     owner: text()
       .notNull()
@@ -170,25 +171,25 @@ export const task = sqliteTable(
       .$onUpdate(() => /* @__PURE__ */ new Date())
       .notNull(),
   },
-  table => ({
+  t => [
     // Index for fetching tasks by board
-    boardIdIdx: index('task_board_id_idx').on(table.boardId),
+    index('task_board_id_idx').on(t.boardId),
     // Index for fetching tasks by column (critical for your main query)
-    boardColumnIdIdx: index('task_board_column_id_idx').on(table.boardColumnId),
+    index('task_board_column_id_idx').on(t.boardColumnId),
     // Composite index for fetching and sorting tasks by column
-    boardColumnIdSortOrderIdx: index('task_board_column_id_sort_order_idx').on(
-      table.boardColumnId,
-      table.sort_order,
+    index('task_board_column_id_sort_order_idx').on(
+      t.boardColumnId,
+      t.sort_order,
     ),
     // Index for fetching tasks by owner
-    ownerIdx: index('task_owner_idx').on(table.owner),
+    index('task_owner_idx').on(t.owner),
     // Index for fetching tasks by assignee
-    assigneeIdx: index('task_assignee_idx').on(table.assignee),
+    index('task_assignee_idx').on(t.assignee),
     // Index for filtering by priority
-    priorityIdx: index('task_priority_idx').on(table.priority),
+    index('task_priority_idx').on(t.priority),
     // Index for filtering/sorting by due date
-    dueDateIdx: index('task_due_date_idx').on(table.due_date),
-  }),
+    index('task_due_date_idx').on(t.due_date),
+  ],
 )
 
 // Relations

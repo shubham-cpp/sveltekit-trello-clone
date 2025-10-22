@@ -7,10 +7,12 @@
   import PlusIcon from '@lucide/svelte/icons/plus'
 
   interface BoardListProps {
+    formId: string
     boards: Board[]
     viewMode: ViewMode
   }
-  const { boards, viewMode }: BoardListProps = $props()
+  // TODO: use the `viewMode` prop and implement a table like view for  viewMode == "list"
+  const { boards, formId }: BoardListProps = $props()
 </script>
 
 <section>
@@ -60,28 +62,30 @@
       <li>No Data found</li>
     {/each}
     <li class='h-full'>
-      <Card.Root
-        class='
-          group h-full cursor-pointer border-2 border-dashed border-border
-          transition-colors
-          hover:border-primary hover:shadow-lg
-        '
-      >
-        <Card.Content class='
-          flex h-full flex-col items-center justify-center p-4
-          sm:p-6
-        '>
-          <PlusIcon class='
-            mb-2 size-6
-            group-hover:text-primary
-            sm:size-8
-          ' />
-          <p class='
-            font-medium
-            group-hover:text-primary
-          '>Create new board</p>
-        </Card.Content>
-      </Card.Root>
+      <button class='h-full w-full' type='submit' form={formId}>
+        <Card.Root
+          class='
+            group h-full cursor-pointer border-2 border-dashed border-border
+            transition-colors
+            hover:border-primary hover:shadow-lg
+          '
+        >
+          <Card.Content class='
+            flex h-full flex-col items-center justify-center p-4
+            sm:p-6
+          '>
+            <PlusIcon class='
+              mb-2 size-6
+              group-hover:text-primary
+              sm:size-8
+            ' />
+            <p class='
+              font-medium
+              group-hover:text-primary
+            '>Create new board</p>
+          </Card.Content>
+        </Card.Root>
+      </button>
     </li>
   </ul>
 </section>

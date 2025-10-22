@@ -52,9 +52,6 @@
         </div>
       </div>
     </Card.Content>
-    <!-- <Card.Footer>
-			<p>Card Footer</p>
-		</Card.Footer> -->
   </Card.Root>
   <Card.Root>
     <Card.Content class='
@@ -87,8 +84,5 @@
         </div>
       </div>
     </Card.Content>
-    <!-- <Card.Footer>
-			<p>Card Footer</p>
-		</Card.Footer> -->
   </Card.Root>
 </section>

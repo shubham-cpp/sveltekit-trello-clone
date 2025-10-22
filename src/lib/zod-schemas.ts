@@ -1,11 +1,13 @@
 import { z } from 'zod/v4'
 
+export const PRIORITY_VALUES = ['low', 'medium', 'high'] as const
+
 export const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
   rememberMe: z.boolean().optional(),
 })
-export type LoginFormSchema = typeof loginSchema
+export type LoginFormSchema = z.infer<typeof loginSchema>
 
 export const signupSchema = z.object({
   firstName: z.string().trim().min(2, 'First name must be at least 2 characters'),
@@ -13,7 +15,7 @@ export const signupSchema = z.object({
   email: z.email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
-export type SignUpFormSchema = typeof signupSchema
+export type SignUpFormSchema = z.infer<typeof signupSchema>
 
 export const profileUpdateSchema = z.object({
   firstName: z.string().trim().min(2, 'First name must be at least 2 characters'),
@@ -45,7 +47,22 @@ export const COLOR_VALUES = [
 ]
 
 export const editBoardSchema = z.object({
-  title: z.string().min(3, 'Title must be at least 3 characters'),
+  title: z.string().trim().min(3, 'Title must be at least 3 characters'),
   color: z.enum(COLOR_VALUES),
 })
-export type EditBoardFormSchema = typeof editBoardSchema
+export type EditBoardFormSchema = z.infer<typeof editBoardSchema>
+
+export const addNewTaskSchema = z.object({
+  title: z.string().trim().min(3, 'Title must be at least 3 characters'),
+  description: z.string().trim().optional(),
+
+  priority: z.enum(PRIORITY_VALUES).optional(),
+  sort_order: z.uint32().optional(),
+  due_date: z.date(),
+
+  // owner: z.string().optional(),
+  assignee: z.string().min(3).max(32),
+
+  // boardColumnId: z.string().min(3).max(32),
+})
+export type AddNewTaskSchema = z.infer<typeof addNewTaskSchema>
