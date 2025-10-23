@@ -1,7 +1,8 @@
 <script lang='ts'>
   import type { PageProps } from './$types'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
-  import BoardIdHeading from './_components/board-id-heading.svelte'
+  import BoardColumns from './_components/board-column/board-columns.svelte'
+  import BoardIdStatHeading from './_components/board-id-stats-heading.svelte'
 
   const { data }: PageProps = $props()
 
@@ -13,5 +14,6 @@
 
 <div>
   <!-- STATS -->
-  <BoardIdHeading board={data.board} form={data.form} />
+  <BoardIdStatHeading board={data.board} form={data.form} />
+  <BoardColumns board={data.board} />
 </div>

@@ -1,6 +1,6 @@
 import { PRIORITY_VALUES } from '$lib/zod-schemas'
 import { relations, sql } from 'drizzle-orm'
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import { nanoid } from 'nanoid'
 
 export const user = sqliteTable('user', {
@@ -172,6 +172,7 @@ export const task = sqliteTable(
       .notNull(),
   },
   t => [
+    unique('task_board_column_id_sort_order_unique').on(t.boardColumnId, t.boardId, t.sort_order),
     // Index for fetching tasks by board
     index('task_board_id_idx').on(t.boardId),
     // Index for fetching tasks by column (critical for your main query)

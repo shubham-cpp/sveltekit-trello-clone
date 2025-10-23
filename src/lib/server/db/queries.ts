@@ -1,5 +1,5 @@
 import type { Board, BoardColumn, BoardTask } from './types'
-import { and, eq } from 'drizzle-orm'
+import { and, eq, sql } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
 import { db } from '.'
 import { board, boardColumn, task } from './schema'
@@ -419,18 +419,24 @@ export const taskQueries = {
       if (!foundColumn)
         return undefined
 
-      // Then create the task
-      const [newTask] = await db
-        .insert(task)
-        .values({
-          ...taskData,
-          boardId,
-          boardColumnId: columnId,
-          owner: userId,
-        })
-        .returning()
-
-      return newTask
+      return await db.transaction(async (tx) => {
+        const sameColumn = eq(task.boardColumnId, foundColumn.id)
+        const totalRows = await tx.select().from(task).where(sameColumn)
+        const { rowsAffected } = await tx.update(task).set({ sort_order: sql`${task.sort_order} + 1` }).where(sameColumn)
+        if (rowsAffected !== totalRows.length)
+          return undefined
+        // Then create the task
+        const [newTask] = await tx
+          .insert(task)
+          .values({
+            ...taskData,
+            boardId,
+            boardColumnId: columnId,
+            owner: userId,
+          })
+          .returning()
+        return newTask
+      })
     }
     catch (error) {
       console.error('ERROR: while `create` in tasks.\n', error)

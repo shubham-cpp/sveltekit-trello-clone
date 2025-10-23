@@ -1,8 +1,9 @@
 <script lang='ts'>
-  import type { Board, BoardColumn, BoardTask } from '$lib/server/db/types'
+  import type { BoardWithColumnAndTask } from '$lib/server/db/types'
 
   import type { AddNewTaskSchema } from '$lib/zod-schemas'
   import type { SuperValidated } from 'sveltekit-superforms'
+
   import AddNewTaskForm from './add-new-task-form.svelte'
 
   export type INewTaskForm = SuperValidated<{
@@ -21,9 +22,7 @@
     sort_order?: number | undefined
   }>
 
-  type BoardTaskWithUser = BoardTask & { ownerUser: any, assigneeUser: any }
-  type BoardColumnWithTask = BoardColumn & { tasks: BoardTaskWithUser[] }
-  interface BoardHeadingProps { board: Board & { columns: BoardColumnWithTask[] }, form: SuperValidated<AddNewTaskSchema> }
+  interface BoardHeadingProps { board: BoardWithColumnAndTask, form: SuperValidated<AddNewTaskSchema> }
 
   const { board, form }: BoardHeadingProps = $props()
 
@@ -47,5 +46,5 @@
       <span>{c.title}: {c.count} </span>
     {/each}
   </div>
-  <AddNewTaskForm {form} />
+  <AddNewTaskForm {form} targetColumnId={board.columns?.[0]?.id} />
 </div>

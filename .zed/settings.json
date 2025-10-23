@@ -1,0 +1,40 @@
+{
+  "prettier": {
+    "allowed": false
+  },
+  // "code_actions_on_format": {
+  //   "source.fixAll.eslint": true,
+  //   "source.organizeImports": false
+  // },
+  "lsp": {
+    "eslint": {
+      "initialization_options": {
+        "run_formatter": true
+      }
+    }
+  },
+  "languages": {
+    "Svelte": {
+      "format_on_save": "off",
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "TSX": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "TypeScript": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    },
+    "JavaScript": {
+      "code_actions_on_format": {
+        "source.fixAll.eslint": true
+      }
+    }
+  },
+  "formatter": "language_server"
+}

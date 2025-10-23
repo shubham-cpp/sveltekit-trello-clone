@@ -53,16 +53,14 @@ export const editBoardSchema = z.object({
 export type EditBoardFormSchema = z.infer<typeof editBoardSchema>
 
 export const addNewTaskSchema = z.object({
-  title: z.string().trim().min(3, 'Title must be at least 3 characters'),
+  title: z.string().trim().min(3, 'Title should at least have 3 characters.').max(96),
   description: z.string().trim().optional(),
 
-  priority: z.enum(PRIORITY_VALUES).optional(),
-  sort_order: z.uint32().optional(),
-  due_date: z.date(),
+  priority: z.enum(PRIORITY_VALUES).default('medium'),
+  sort_order: z.uint32().default(0),
+  due_date: z.iso.date(),
 
-  // owner: z.string().optional(),
-  assignee: z.string().min(3).max(32),
-
-  // boardColumnId: z.string().min(3).max(32),
+  assignee: z.string().min(6, 'Not a valid assignee.').max(56),
+  targetColumnId: z.string().min(6, 'Not a valid column id.').max(56),
 })
 export type AddNewTaskSchema = z.infer<typeof addNewTaskSchema>

@@ -8,3 +8,7 @@ export type BoardColumnInsert = typeof boardColumn.$inferInsert
 
 export type BoardTask = typeof task.$inferSelect
 export type BoardTaskInsert = typeof task.$inferInsert
+
+export type BoardTaskWithUser = BoardTask & { ownerUser: any, assigneeUser: any }
+export type BoardColumnWithTask = BoardColumn & { tasks: BoardTaskWithUser[] }
+export type BoardWithColumnAndTask = Board & { columns: BoardColumnWithTask[] }
