@@ -1,15 +1,16 @@
-<script lang="ts">
-	import { type WithElementRef, cn } from "$lib/utils.js";
-	import type { HTMLAttributes } from "svelte/elements";
+<script lang='ts'>
+  import type { WithElementRef } from '$lib/utils.js'
+  import type { HTMLAttributes } from 'svelte/elements'
+  import { cn } from '$lib/utils.js'
 
-	let {
-		ref = $bindable(null),
-		class: className,
-		children,
-		...restProps
-	}: WithElementRef<HTMLAttributes<HTMLElement>> = $props();
+  let {
+    ref = $bindable(null),
+    class: className,
+    children,
+    ...restProps
+  }: WithElementRef<HTMLAttributes<HTMLElement>> = $props()
 </script>
 
-<div {...restProps} bind:this={ref} class={cn("flex flex-col", className)}>
-	{@render children?.()}
+<div {...restProps} bind:this={ref} class={cn('flex flex-col', className)}>
+  {@render children?.()}
 </div>

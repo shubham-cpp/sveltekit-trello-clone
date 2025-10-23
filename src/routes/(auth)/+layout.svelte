@@ -17,8 +17,8 @@
 '>
   <div
     class='
-      m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border bg-card p-0.5
-      shadow-md
+      m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border
+      bg-card p-0.5 shadow-md
       dark:[--color-muted:var(--color-zinc-900)]
     '
   >

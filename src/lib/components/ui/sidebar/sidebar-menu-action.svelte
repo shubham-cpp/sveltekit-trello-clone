@@ -19,8 +19,9 @@
   const mergedProps = $derived({
     'class': cn(
       `
-        absolute top-1.5 right-1 flex aspect-square w-5 items-center justify-center rounded-md p-0
-        text-sidebar-foreground ring-sidebar-ring outline-hidden transition-transform
+        absolute top-1.5 right-1 flex aspect-square w-5 items-center
+        justify-center rounded-md p-0 text-sidebar-foreground ring-sidebar-ring
+        outline-hidden transition-transform
         peer-hover/menu-button:text-sidebar-accent-foreground
         hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
         focus-visible:ring-2
@@ -36,13 +37,13 @@
       'peer-data-[size=lg]/menu-button:top-2.5',
       'group-data-[collapsible=icon]:hidden',
       showOnHover
-      && `
-          group-focus-within/menu-item:opacity-100
-          group-hover/menu-item:opacity-100
-          peer-data-[active=true]/menu-button:text-sidebar-accent-foreground
-          data-[state=open]:opacity-100
-          md:opacity-0
-        `,
+        && `
+        group-focus-within/menu-item:opacity-100
+        group-hover/menu-item:opacity-100
+        peer-data-[active=true]/menu-button:text-sidebar-accent-foreground
+        data-[state=open]:opacity-100
+        md:opacity-0
+      `,
       className,
     ),
     'data-slot': 'sidebar-menu-action',

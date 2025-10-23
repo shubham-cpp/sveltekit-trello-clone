@@ -139,6 +139,7 @@ export const boardColumn = sqliteTable(
   ],
 )
 
+// TODO: add comments to task
 export const task = sqliteTable(
   'task',
   {

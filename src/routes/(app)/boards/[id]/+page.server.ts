@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types'
-import { boardQueries, taskQueries } from '$lib/server/db/queries'
+import { boardQueries } from '$lib/server/db/queries'
 import { addNewTaskSchema, editBoardSchema } from '$lib/zod-schemas'
 import { error, redirect } from '@sveltejs/kit'
 import { fail, superValidate } from 'sveltekit-superforms'

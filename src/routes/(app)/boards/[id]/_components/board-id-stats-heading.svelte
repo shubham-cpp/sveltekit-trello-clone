@@ -24,7 +24,7 @@
 
   interface BoardHeadingProps { board: BoardWithColumnAndTask, form: SuperValidated<AddNewTaskSchema> }
 
-  const { board, form }: BoardHeadingProps = $props()
+  const { board }: BoardHeadingProps = $props()
 
   const totalTasks = $derived.by(() =>
     board.columns.reduce((sum, col) => sum + col.tasks.length, 0),
@@ -46,5 +46,5 @@
       <span>{c.title}: {c.count} </span>
     {/each}
   </div>
-  <AddNewTaskForm {form} targetColumnId={board.columns?.[0]?.id} />
+  <AddNewTaskForm targetColumnId={board.columns?.[0]?.id} />
 </div>

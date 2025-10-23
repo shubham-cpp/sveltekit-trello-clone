@@ -3,7 +3,7 @@
   import { mode } from 'mode-watcher'
   import { Toaster as Sonner } from 'svelte-sonner'
 
-  let { ...restProps }: SonnerProps = $props()
+  const { ...restProps }: SonnerProps = $props()
 </script>
 
 <Sonner

@@ -1,6 +1,5 @@
 <script lang='ts'>
-  import type { AddNewTaskSchema } from '$lib/zod-schemas'
-  import type { SuperValidated } from 'sveltekit-superforms'
+  import type { ButtonProps } from '$lib/components/ui/button/button.svelte'
 
   import { buttonVariants } from '$lib/components/ui/button'
   import Button from '$lib/components/ui/button/button.svelte'
@@ -26,17 +25,16 @@
   import { toast } from 'svelte-sonner'
   import { createTask } from '../data.remote'
 
-  interface AddNewTaskFormProps {
-    form: SuperValidated<AddNewTaskSchema>
+  interface AddNewTaskFormProps extends Pick<ButtonProps, 'class' | 'variant'> {
     targetColumnId: string
   }
   const df = new DateFormatter('en-IN', { dateStyle: 'long' })
   const todayDate = today(getLocalTimeZone())
 
-  let dialogOpen = $state(true)
+  let dialogOpen = $state(false)
   let calenderOpen = $state(false)
 
-  const { targetColumnId }: AddNewTaskFormProps = $props()
+  const { targetColumnId, class: className, variant }: AddNewTaskFormProps = $props()
   const formData = createTask.fields
 
   let due_date = $state(
@@ -50,15 +48,15 @@
   $effect(() => {
     if (createTask.result?.status === 201) {
       dialogOpen = false
+      due_date = undefined
       toast.success((createTask.result as any)?.message || 'New task created successfully.')
     }
   })
-
 </script>
 
 <Dialog.Root bind:open={dialogOpen}>
   <Dialog.Trigger
-    class={cn(buttonVariants(), `cursor-pointer`)}
+    class={cn(buttonVariants({ variant }), `cursor-pointer`, className)}
     aria-label='Add new task'
   >
     <PlusIcon />

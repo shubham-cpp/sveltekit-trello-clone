@@ -22,7 +22,9 @@
     <DropdownMenu.Trigger>
       <Button size='icon' variant='outline'>
         <Avatar class='bg-transparent'>
-          <AvatarImage src={user?.image ?? ''} alt={user?.name ?? ''} class='object-cover' />
+          <AvatarImage src={user?.image ?? ''} alt={user?.name ?? ''} class='
+            object-cover
+          ' />
           <AvatarFallback class='bg-transparent'>
             {getPrefix(user?.name ?? '')}
           </AvatarFallback>

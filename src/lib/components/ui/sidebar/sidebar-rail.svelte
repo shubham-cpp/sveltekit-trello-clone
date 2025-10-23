@@ -24,10 +24,12 @@
   title='Toggle Sidebar'
   class={cn(
     `
-      absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all ease-linear
+      absolute inset-y-0 z-20 hidden w-4 -translate-x-1/2 transition-all
+      ease-linear
       group-data-[side=left]:-right-4
       group-data-[side=right]:left-0
-      after:absolute after:inset-y-0 after:left-[calc(1/2*100%-1px)] after:w-[2px]
+      after:absolute after:inset-y-0 after:left-[calc(1/2*100%-1px)]
+      after:w-[2px]
       hover:after:bg-sidebar-border
       sm:flex
     `,

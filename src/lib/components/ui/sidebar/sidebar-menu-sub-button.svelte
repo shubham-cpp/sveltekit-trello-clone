@@ -21,8 +21,8 @@
   const mergedProps = $derived({
     'class': cn(
       `
-        flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2
-        text-sidebar-foreground ring-sidebar-ring outline-hidden
+        flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden
+        rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden
         hover:bg-sidebar-accent hover:text-sidebar-accent-foreground
         focus-visible:ring-2
         active:bg-sidebar-accent active:text-sidebar-accent-foreground
