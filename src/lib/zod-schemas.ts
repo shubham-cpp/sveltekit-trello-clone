@@ -64,3 +64,22 @@ export const addNewTaskSchema = z.object({
   targetColumnId: z.string().min(6, 'Not a valid column id.').max(56),
 })
 export type AddNewTaskSchema = z.infer<typeof addNewTaskSchema>
+
+export const updateTaskSortOrderSchema = z.object({
+  columnId: z.string().min(6, 'Invalid column id passed.').max(56),
+  newSortOrder: z.array(z.object({
+    id: z.string().min(6, 'Invalid id passed.').max(56),
+    newIndex: z.uint32(),
+  })),
+})
+export type UpdateTaskSortOrderSchema = z.infer<typeof updateTaskSortOrderSchema>
+
+export const moveTaskColumnSchema = z.object({
+  newColumnId: z.string().min(6, 'Invalid column id passed.').max(56),
+  taskId: z.string().min(6, 'Invalid task id passed.').max(56),
+  newSortOrder: z.array(z.object({
+    id: z.string().min(6, 'Invalid id passed.').max(56),
+    newIndex: z.uint32(),
+  })),
+})
+export type MoveTaskColumnSchema = z.infer<typeof moveTaskColumnSchema>

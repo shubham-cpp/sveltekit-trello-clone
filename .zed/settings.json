@@ -10,15 +10,24 @@
     "eslint": {
       "initialization_options": {
         "run_formatter": true
+      },
+      "settings": {
+        "codeActionOnSave": {
+          "rules": [
+            "*"
+          ] // or specify rules you want; this allows fixAll on save
+        }
       }
-    }
+    },
   },
   "languages": {
     "Svelte": {
-      "format_on_save": "off",
-      "code_actions_on_format": {
-        "source.fixAll.eslint": true
-      }
+      // Set formatter to use code actions only (eslint fix)
+      "formatter": {
+        "code_actions": {
+          "source.fixAll.eslint": true
+        }
+      },
     },
     "TSX": {
       "code_actions_on_format": {

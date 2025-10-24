@@ -1,5 +1,6 @@
+import type { MoveTaskColumnSchema, UpdateTaskSortOrderSchema } from '$lib/zod-schemas'
 import type { Board, BoardColumn, BoardTask } from './types'
-import { and, eq, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
 import { db } from '.'
 import { board, boardColumn, task } from './schema'
@@ -497,46 +498,116 @@ export const taskQueries = {
   },
   async moveToColumn(
     userId: string,
-    taskId: string,
+    boardId: string,
     newColumnId: string,
-  ): Promise<undefined | BoardTask> {
+    taskId: string,
+    newSortOrder: MoveTaskColumnSchema['newSortOrder'],
+  ): Promise<boolean> {
     try {
-      // Get the task and join with board to check ownership
-      const taskResult = await db
-        .select()
-        .from(task)
-        .innerJoin(board, eq(task.boardId, board.id))
-        .where(and(eq(task.id, taskId), eq(board.userId, userId), eq(board.isDeleted, false)))
-        .get()
-
-      if (!taskResult)
-        return undefined
-
-      // Check if the column exists and belongs to the same board
-      const columnResult = await db
-        .select()
-        .from(boardColumn)
-        .where(
-          and(eq(boardColumn.id, newColumnId), eq(boardColumn.boardId, taskResult.task.boardId)),
-        )
-        .get()
-
-      if (!columnResult)
-        return undefined
-
-      // Update the task with the new column
-      const [updatedTask] = await db
-        .update(task)
-        .set({
-          boardColumnId: newColumnId,
+      const res = await db.transaction(async (tx) => {
+        const found = await tx.query.board.findFirst({
+          where: (b, op) => op.and(
+            op.eq(b.id, boardId),
+            op.eq(b.userId, userId),
+            op.eq(b.isDeleted, false),
+          ),
+          with: {
+            columns: {
+              where: (bc, op) => op.eq(bc.id, newColumnId),
+            },
+          },
         })
-        .where(eq(task.id, taskId))
-        .returning()
+        if (!found)
+          return false
 
-      return updatedTask
+        if (newSortOrder.length <= 1) {
+          const [hasUpdated] = await tx
+            .update(task)
+            .set({ boardColumnId: newColumnId, sort_order: 0 })
+            .where(eq(task.id, taskId))
+            .returning()
+          return !!hasUpdated
+        }
+
+        const movedIdx = newSortOrder.findIndex(i => i.id === taskId)
+        if (movedIdx < 0)
+          return false
+
+        await tx
+          .update(task)
+          .set({ boardColumnId: newColumnId, sort_order: movedIdx })
+          .where(eq(task.id, taskId))
+
+        const ids = newSortOrder.map(item => item.id)
+        const caseSql = sql`
+      (case
+        ${sql.join(
+          newSortOrder.map(item =>
+            sql`when ${task.id} = ${item.id} then ${item.newIndex}`,
+          ),
+          sql` `,
+        )}
+      end)
+    `
+        const updatedData = await tx
+          .update(task)
+          .set({ sort_order: caseSql })
+          .where(and(
+            eq(task.boardColumnId, newColumnId),
+            inArray(task.id, ids),
+          ))
+        return !!updatedData
+      })
+      return !!res
     }
     catch (error) {
       console.error('ERROR: while `moveToColumn` in tasks.\n', error)
+      return false
+    }
+  },
+  async updateSortOrder(userId: string, boardId: string, columnId: string, newSortOrder: UpdateTaskSortOrderSchema['newSortOrder']) {
+    if (newSortOrder.length === 0)
+      return undefined
+    try {
+      const res = await db.transaction(async (tx) => {
+        const found = await tx.query.board.findFirst({
+          where: (b, op) => op.and(
+            op.eq(b.id, boardId),
+            op.eq(b.userId, userId),
+            op.eq(b.isDeleted, false),
+          ),
+          with: {
+            columns: {
+              where: (bc, op) => op.eq(bc.id, columnId),
+            },
+          },
+        })
+        if (!found)
+          return undefined
+
+        const ids = newSortOrder.map(r => r.id)
+        const caseSql = sql`
+      (case
+        ${sql.join(
+          newSortOrder.map(r => sql`when ${task.id} = ${r.id} then ${r.newIndex}`),
+          sql` `,
+        )}
+       end)
+    `
+
+        return await tx
+          .update(task)
+          .set({ sort_order: caseSql })
+          .where(and(eq(task.boardColumnId, columnId), inArray(task.id, ids),
+          ))
+          .returning()
+      })
+      if (!Array.isArray(res) || res.length === 0)
+        return undefined
+      return true
+    }
+    catch (error) {
+      console.error('ERROR: while `updateSortOrder` in tasks.\n', error)
       return undefined
     }
   },

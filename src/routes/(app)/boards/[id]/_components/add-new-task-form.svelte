@@ -25,7 +25,8 @@
   import { toast } from 'svelte-sonner'
   import { createTask } from '../data.remote'
 
-  interface AddNewTaskFormProps extends Pick<ButtonProps, 'class' | 'variant'> {
+  interface AddNewTaskFormProps
+    extends Pick<ButtonProps, 'class' | 'variant'> {
     targetColumnId: string
   }
   const df = new DateFormatter('en-IN', { dateStyle: 'long' })
@@ -41,7 +42,9 @@
     !formData.due_date?.value()
       ? undefined
       : parseDate(
-        new Date(formData.due_date.value()).toISOString().split('T')[0],
+        new Date(formData.due_date.value())
+          .toISOString()
+          .split('T')[0],
       ),
   )
 
@@ -136,7 +139,9 @@
           sm:grid-cols-2
         '
       >
-        <Field.Field aria-invalid={!!formData.assignee.issues()?.length}>
+        <Field.Field
+          aria-invalid={!!formData.assignee.issues()?.length}
+        >
           <Field.Label
             aria-invalid={!!formData.assignee.issues()?.length}
             for='assignee'>Assignee</Field.Label
@@ -162,14 +167,17 @@
               ?.join(',')}
           </Field.Error>
         </Field.Field>
-        <Field.Field aria-invalid={!!formData.priority.issues()?.length}>
+        <Field.Field
+          aria-invalid={!!formData.priority.issues()?.length}
+        >
           <Field.Label
             aria-invalid={!!formData.priority.issues()?.length}
             for='priority'>Priority</Field.Label
           >
           <Select.Root
             type='single'
-            onValueChange={newV => formData.priority.set(newV as any)}
+            onValueChange={newV =>
+              formData.priority.set(newV as any)}
           >
             <Select.Trigger
               id='department'
@@ -225,13 +233,18 @@
                 )}
               >
                 {due_date
-                  ? df.format(due_date.toDate(getLocalTimeZone()))
+                  ? df.format(
+                    due_date.toDate(getLocalTimeZone()),
+                  )
                   : 'Select date'}
                 <CalendarIcon />
               </Button>
             {/snippet}
           </Popover.Trigger>
-          <Popover.Content class='w-auto overflow-hidden p-0' align='start'>
+          <Popover.Content
+            class='w-auto overflow-hidden p-0'
+            align='start'
+          >
             <Calendar
               id='due_date'
               type='single'
@@ -252,7 +265,7 @@
             />
           </Popover.Content>
         </Popover.Root>
-        <input {...formData.due_date.as('date')} hidden>
+        <input {...formData.due_date.as('date')} hidden />
         <Field.Error
           class='
             hidden
