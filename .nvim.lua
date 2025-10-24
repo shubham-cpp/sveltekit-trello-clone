@@ -2,6 +2,7 @@ local customizations = {
 	{ rule = "style/*",   severity = "off", fixable = true },
 	{ rule = "format/*",  severity = "off", fixable = true },
 	{ rule = "*-indent",  severity = "off", fixable = true },
+	{ rule = "*/indent",  severity = "off", fixable = true },
 	{ rule = "*-spacing", severity = "off", fixable = true },
 	{ rule = "*-spaces",  severity = "off", fixable = true },
 	{ rule = "*-order",   severity = "off", fixable = true },

@@ -54,12 +54,18 @@
         {#if isLoginRoute}
           Don&apos;t have an account ?
 
-          <a class={cn(buttonVariants({ variant: 'link' }), 'px-1')} href='/sign-up'
+          <a class={cn(buttonVariants({ variant: 'link' }), `
+            px-1 text-green-600
+            dark:text-green-400
+          `)} href='/sign-up'
           >Create account</a
           >
         {:else}
           Have an account ?
-          <a class={cn(buttonVariants({ variant: 'link' }), 'px-1')} href='/login'>Login</a>
+          <a class={cn(buttonVariants({ variant: 'link' }), `
+            px-1 text-green-600
+            dark:text-green-400
+          `)} href='/login'>Login</a>
         {/if}
       </p>
     </div>

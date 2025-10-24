@@ -2,48 +2,41 @@
   "prettier": {
     "allowed": false
   },
-  // "code_actions_on_format": {
-  //   "source.fixAll.eslint": true,
-  //   "source.organizeImports": false
-  // },
+  "languages": {
+    "JSON": {
+      "prettier": { "allowed": true },
+      "formatter": "prettier"
+    },
+    "JSONC": {
+      "prettier": { "allowed": true },
+      "formatter": "prettier"
+    }
+  },
   "lsp": {
     "eslint": {
-      "initialization_options": {
-        "run_formatter": true
-      },
       "settings": {
-        "codeActionOnSave": {
-          "rules": [
-            "*"
-          ] // or specify rules you want; this allows fixAll on save
-        }
-      }
-    },
-  },
-  "languages": {
-    "Svelte": {
-      // Set formatter to use code actions only (eslint fix)
-      "formatter": {
-        "code_actions": {
-          "source.fixAll.eslint": true
-        }
-      },
-    },
-    "TSX": {
-      "code_actions_on_format": {
-        "source.fixAll.eslint": true
-      }
-    },
-    "TypeScript": {
-      "code_actions_on_format": {
-        "source.fixAll.eslint": true
-      }
-    },
-    "JavaScript": {
-      "code_actions_on_format": {
-        "source.fixAll.eslint": true
+        "rulesCustomizations": [
+          { "rule": "style/*", "severity": "off", "fixable": true },
+          { "rule": "format/*", "severity": "off", "fixable": true },
+          { "rule": "*-indent", "severity": "off", "fixable": true },
+          { "rule": "*/indent", "severity": "off", "fixable": true },
+          { "rule": "*-spacing", "severity": "off", "fixable": true },
+          { "rule": "*-spaces", "severity": "off", "fixable": true },
+          { "rule": "*-order", "severity": "off", "fixable": true },
+          { "rule": "*-dangle", "severity": "off", "fixable": true },
+          { "rule": "*-newline", "severity": "off", "fixable": true },
+          { "rule": "*quotes", "severity": "off", "fixable": true },
+          { "rule": "*semi", "severity": "off", "fixable": true }
+        ]
       }
     }
   },
-  "formatter": "language_server"
+  "formatter": {
+    "language_server": {
+      "name": "eslint"
+    }
+  },
+  "code_actions_on_format": {
+    "source.fixAll.eslint": true
+  }
 }

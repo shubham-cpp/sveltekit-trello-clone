@@ -612,3 +612,108 @@ export const taskQueries = {
     }
   },
 } as const
+
+export const organizationQueries = {
+  async searchMembers(
+    organizationId: string,
+    searchQuery: string,
+  ): Promise<undefined | Array<{
+    id: string
+    name: string
+    email: string
+    image: string | null
+    role: string
+  }>> {
+    try {
+      // Get all members of the organization with their user details
+      const members = await db.query.member.findMany({
+        where: (m, { eq }) => eq(m.organizationId, organizationId),
+        with: {
+          user: {
+            columns: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+        },
+      })
+
+      if (!members || members.length === 0) {
+        return []
+      }
+
+      // Filter members by name or email containing the search query
+      const filteredMembers = members.filter(m =>
+        m.user.name.toLowerCase().includes(searchQuery.toLowerCase())
+        || m.user.email.toLowerCase().includes(searchQuery.toLowerCase()),
+      )
+
+      // Map to the expected return format
+      return filteredMembers.map(m => ({
+        id: m.user.id,
+        name: m.user.name,
+        email: m.user.email,
+        image: m.user.image,
+        role: m.role,
+      }))
+    }
+    catch (error) {
+      console.error('ERROR: while `searchMembers` in organization.\n', error)
+      return undefined
+    }
+  },
+
+  async getActiveOrganization(userId: string): Promise<undefined | { id: string, name: string }> {
+    try {
+      // Find the most recent session for the user to get the active organization ID
+      const session = await db.query.session.findFirst({
+        where: (s, { eq }) => eq(s.userId, userId),
+        orderBy: (s, { desc }) => desc(s.createdAt),
+      })
+
+      if (!session?.activeOrganizationId) {
+        // If no active organization in session, find the first organization the user is a member of
+        const membership = await db.query.member.findFirst({
+          where: (m, { eq }) => eq(m.userId, userId),
+          with: {
+            organization: true,
+          },
+        })
+
+        if (!membership) {
+          return undefined
+        }
+
+        return {
+          id: membership.organization.id,
+          name: membership.organization.name,
+        }
+      }
+
+      // Get the active organization details
+      const activeOrgId = session.activeOrganizationId
+      if (!activeOrgId) {
+        return undefined
+      }
+
+      const org = await db.query.organization.findFirst({
+        where: (o, { eq }) => eq(o.id, activeOrgId),
+      })
+
+      if (!org) {
+        return undefined
+      }
+
+      return {
+        id: org.id,
+        name: org.name,
+      }
+    }
+    catch (error) {
+      console.error('ERROR: while `getActiveOrganization` in organization.\n', error)
+      return undefined
+    }
+  },
+} as const

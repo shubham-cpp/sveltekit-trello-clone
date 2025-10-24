@@ -1,7 +1,7 @@
-import { PRIORITY_VALUES } from '$lib/zod-schemas'
 import { relations, sql } from 'drizzle-orm'
 import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import { nanoid } from 'nanoid'
+import { PRIORITY_VALUES } from '../../zod-schemas'
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -33,6 +33,7 @@ export const session = sqliteTable('session', {
   userId: text('user_id')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
+  activeOrganizationId: text('active_organization_id'),
 })
 
 export const account = sqliteTable('account', {
@@ -74,6 +75,67 @@ export const verification = sqliteTable('verification', {
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
 })
+
+export const organization = sqliteTable(
+  'organization',
+  {
+    id: text('id').primaryKey(),
+    name: text('name').notNull(),
+    slug: text('slug').notNull().unique(),
+    logo: text('logo'),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    metadata: text('metadata'),
+  },
+  t => [
+    // For searching/filtering organizations by name and recency
+    index('organization_name_idx').on(t.name),
+    index('organization_created_at_idx').on(t.createdAt),
+  ],
+)
+
+export const member = sqliteTable(
+  'member',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    userId: text('user_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+    role: text('role').default('member').notNull(),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+  },
+  t => [
+    // Fast lookups by org/user and de-duplication across the join
+    index('member_organization_id_idx').on(t.organizationId),
+    index('member_user_id_idx').on(t.userId),
+    index('member_role_idx').on(t.role),
+    unique('member_org_user_unique').on(t.organizationId, t.userId),
+  ],
+)
+
+export const invitation = sqliteTable(
+  'invitation',
+  {
+    id: text('id').primaryKey(),
+    organizationId: text('organization_id')
+      .notNull()
+      .references(() => organization.id, { onDelete: 'cascade' }),
+    email: text('email').notNull(),
+    role: text('role'),
+    status: text('status').default('pending').notNull(),
+    expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
+    inviterId: text('inviter_id')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+  },
+  t => [
+    // Common queries: list invitations by org and status, lookup by email
+    index('invitation_email_idx').on(t.email),
+    index('invitation_org_id_status_idx').on(t.organizationId, t.status),
+  ],
+)
 
 export const board = sqliteTable(
   'board',
@@ -228,4 +290,40 @@ export const taskRelations = relations(task, ({ one }) => ({
     fields: [task.assignee],
     references: [user.id],
   }),
+}))
+
+// Organization plugin relations
+export const organizationRelations = relations(organization, ({ many }) => ({
+  members: many(member),
+  invitations: many(invitation),
+}))
+
+export const memberRelations = relations(member, ({ one }) => ({
+  organization: one(organization, {
+    fields: [member.organizationId],
+    references: [organization.id],
+  }),
+  user: one(user, {
+    fields: [member.userId],
+    references: [user.id],
+  }),
+}))
+
+export const invitationRelations = relations(invitation, ({ one }) => ({
+  organization: one(organization, {
+    fields: [invitation.organizationId],
+    references: [organization.id],
+  }),
+  inviter: one(user, {
+    fields: [invitation.inviterId],
+    references: [user.id],
+  }),
+}))
+
+// Reverse relations on user for organization plugin
+export const userRelations = relations(user, ({ many }) => ({
+  // All membership rows for this user (join table: member)
+  memberships: many(member),
+  // All invitations this user has sent
+  invitationsSent: many(invitation),
 }))

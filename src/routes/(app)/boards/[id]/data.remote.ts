@@ -1,7 +1,8 @@
 import { command, form, getRequestEvent } from '$app/server'
-import { taskQueries } from '$lib/server/db/queries'
+import { organizationQueries, taskQueries } from '$lib/server/db/queries'
 import { addNewTaskSchema, moveTaskColumnSchema, updateTaskSortOrderSchema } from '$lib/zod-schemas'
 import { fail, redirect } from '@sveltejs/kit'
+import { z } from 'zod/v4'
 
 export const createTask = form(
   addNewTaskSchema,
@@ -68,3 +69,42 @@ export const moveTaskColumn = command(moveTaskColumnSchema, async (data) => {
 
   return taskQueries.moveToColumn(userId, boardId, data.newColumnId, data.taskId, data.newSortOrder)
 })
+
+// Schema for the search query
+const searchMembersSchema = z.object({
+  query: z.string(),
+})
+
+export const searchOrganizationMembers = command(
+  searchMembersSchema,
+  async ({ query }) => {
+    const { locals } = getRequestEvent()
+    const userId = locals.user?.id
+
+    if (!userId) {
+      return fail(401, { error: 'Unauthorized' })
+    }
+
+    try {
+      // Get the active organization
+      const activeOrg = await organizationQueries.getActiveOrganization(userId)
+
+      if (!activeOrg) {
+        return fail(400, { error: 'No active organization' })
+      }
+
+      // Search for members in the active organization
+      const members = await organizationQueries.searchMembers(activeOrg.id, query)
+
+      if (!members) {
+        return []
+      }
+
+      return members
+    }
+    catch (error) {
+      console.error('Error searching organization members:', error)
+      return fail(500, { error: 'Failed to search organization members' })
+    }
+  },
+)

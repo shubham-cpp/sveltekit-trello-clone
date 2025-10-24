@@ -1,7 +1,5 @@
 import { z } from 'zod/v4'
 
-export const PRIORITY_VALUES = ['low', 'medium', 'high'] as const
-
 export const loginSchema = z.object({
   email: z.email(),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -52,6 +50,8 @@ export const editBoardSchema = z.object({
 })
 export type EditBoardFormSchema = z.infer<typeof editBoardSchema>
 
+export const PRIORITY_VALUES = ['low', 'medium', 'high'] as const
+
 export const addNewTaskSchema = z.object({
   title: z.string().trim().min(3, 'Title should at least have 3 characters.').max(96),
   description: z.string().trim().optional(),
@@ -60,7 +60,7 @@ export const addNewTaskSchema = z.object({
   sort_order: z.uint32().default(0),
   due_date: z.iso.date(),
 
-  assignee: z.string().min(6, 'Not a valid assignee.').max(56),
+  assignee: z.string().min(6, 'Not a valid assignee.').max(56).describe('User ID of the assignee'),
   targetColumnId: z.string().min(6, 'Not a valid column id.').max(56),
 })
 export type AddNewTaskSchema = z.infer<typeof addNewTaskSchema>
