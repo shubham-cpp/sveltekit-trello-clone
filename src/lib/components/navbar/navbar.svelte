@@ -9,6 +9,7 @@
   import FilterDialog from './filter-dialog.svelte'
   import Logo from './logo.svelte'
   import UserProfileMenu from './user-profile-menu.svelte'
+  import WorkspaceProfileMenu from './workspace-profile-menu.svelte'
 
   const isRouteBoard = $derived(page.url.pathname.startsWith('/boards'))
 </script>
@@ -58,6 +59,7 @@
       {#if isRouteBoard}
         <FilterDialog />
       {/if}
+      <WorkspaceProfileMenu />
       <UserProfileMenu />
       <ThemeToggle />
     </div>

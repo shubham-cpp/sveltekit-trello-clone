@@ -1,10 +1,18 @@
 <script lang='ts'>
   import type { Board } from '$lib/server/db/types'
   import * as Card from '$lib/components/ui/card/index.js'
-  import ChartNoAxesCombines from '@lucide/svelte/icons/chart-no-axes-combined'
-  import Trello from '@lucide/svelte/icons/trello'
+  import ChartNoAxesCombinesIcon from '@lucide/svelte/icons/chart-no-axes-combined'
+  import TrelloIcon from '@lucide/svelte/icons/trello'
+  import UserPlusIcon from '@lucide/svelte/icons/user-plus'
+  import UserIcon from '@lucide/svelte/icons/users'
 
-  const { boards }: { boards: Board[] } = $props()
+  interface BoardStatsProps {
+    boards: Board[]
+    memberCount: number
+    pendingInvitesCount?: number
+  }
+
+  const { boards, memberCount, pendingInvitesCount = 0 }: BoardStatsProps = $props()
 
   const recentActivities = $derived.by(() => {
     const oneWeekAgo = new Date()
@@ -44,7 +52,7 @@
             dark:bg-cyan-600
           '
         >
-          <Trello class='
+          <TrelloIcon class='
             size-6 text-blue-600
             sm:size-7
             dark:text-blue-200
@@ -76,10 +84,79 @@
             dark:bg-purple-600
           '
         >
-          <ChartNoAxesCombines class='
+          <ChartNoAxesCombinesIcon class='
             size-6 text-purple-600
             sm:size-7
             dark:text-purple-200
+          ' />
+        </div>
+      </div>
+    </Card.Content>
+  </Card.Root>
+
+  <Card.Root>
+    <Card.Content class='
+      px-4
+      sm:px-6
+    '>
+      <div class='flex items-center justify-between'>
+        <div>
+          <p class='
+            text-xs font-medium text-primary-foreground/70
+            sm:text-sm
+          '>Members</p>
+          <p class='
+            text-xl font-bold
+            sm:text-2xl
+          '>
+            {memberCount}
+          </p>
+        </div>
+        <div
+          class='
+            flex size-10 items-center justify-center rounded-lg bg-emerald-100
+            sm:size-12
+            dark:bg-emerald-600
+          '
+        >
+          <UserIcon class='
+            size-6 text-emerald-600
+            sm:size-7
+            dark:text-emerald-200
+          ' />
+        </div>
+      </div>
+    </Card.Content>
+  </Card.Root>
+  <Card.Root>
+    <Card.Content class='
+      px-4
+      sm:px-6
+    '>
+      <div class='flex items-center justify-between'>
+        <div>
+          <p class='
+            text-xs font-medium text-primary-foreground/70
+            sm:text-sm
+          '>Pending Invites</p>
+          <p class='
+            text-xl font-bold
+            sm:text-2xl
+          '>
+            {pendingInvitesCount}
+          </p>
+        </div>
+        <div
+          class='
+            flex size-10 items-center justify-center rounded-lg bg-indigo-100
+            sm:size-12
+            dark:bg-indigo-600
+          '
+        >
+          <UserPlusIcon class='
+            size-6 text-indigo-600
+            sm:size-7
+            dark:text-indigo-200
           ' />
         </div>
       </div>

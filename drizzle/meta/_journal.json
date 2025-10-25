@@ -8,6 +8,13 @@
       "when": 1761316563810,
       "tag": "0000_slim_deathbird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1761372808767,
+      "tag": "0001_right_the_renegades",
+      "breakpoints": true
     }
   ]
 }

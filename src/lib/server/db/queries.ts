@@ -1,9 +1,10 @@
 import type { MoveTaskColumnSchema, UpdateTaskSortOrderSchema } from '$lib/zod-schemas'
 import type { Board, BoardColumn, BoardTask } from './types'
-import { and, eq, inArray, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, sql } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
+import { nanoid } from 'nanoid'
 import { db } from '.'
-import { board, boardColumn, task } from './schema'
+import { board, boardColumn, invitation, member, organization, session, task, user } from './schema'
 
 type UpdateBoard = Pick<Board, 'id'> & Partial<Omit<Board, 'id' | 'isDeleted'>>
 type UpdateBoardColumn = Pick<BoardColumn, 'id'> & Partial<Omit<BoardColumn, 'id'>>
@@ -11,9 +12,9 @@ type UpdateTask = Pick<BoardTask, 'id'> & Partial<Omit<BoardTask, 'id'>>
 
 type BoardWithColumn = Board & { columns: BoardColumn[] }
 
-function getDefaultColumns(
-  boardId: string,
-): Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'>[] {
+type IColumn = Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'>
+
+function getDefaultColumns(boardId: string): IColumn[] {
   const cols = [
     { title: 'Todo', sort_order: 0 },
     { title: 'In Progress', sort_order: 1 },
@@ -21,22 +22,54 @@ function getDefaultColumns(
     { title: 'Done', sort_order: 3 },
   ] as const
 
-  return cols.map(
-    (c): Pick<BoardColumn, 'title' | 'sort_order' | 'boardId'> => ({ ...c, boardId }),
-  )
+  return cols.map((c): IColumn => ({ ...c, boardId }))
+}
+
+/**
+ * Helper: resolve the user's active organization id.
+ * - Prefer the latest session.activeOrganizationId
+ * - Fallback to the latest membership's organization
+ */
+async function getActiveOrganizationId(userId: string): Promise<string | undefined> {
+  // const org = await auth.api.getFullOrganization({ headers: await getHeaders() })
+  // console.log(org)
+  const sess = await db.query.session.findFirst({
+    where: (s, { eq }) => eq(s.userId, userId),
+    orderBy: (s, { desc }) => desc(s.createdAt),
+  })
+  if (sess?.activeOrganizationId)
+    return sess.activeOrganizationId
+
+  const ms = await db.query.member.findFirst({
+    where: (m, { eq }) => eq(m.userId, userId),
+    with: {
+      organization: {
+        columns: {
+          id: true,
+        },
+      },
+    },
+    orderBy: (m, { desc }) => desc(m.createdAt),
+  })
+  return ms?.organization.id
 }
 
 export const boardQueries = {
   async createWithDefaultColumns(
     userId: string,
-    boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>,
+    boardData: Omit<Board, 'id' | 'userId' | 'organizationId' | 'isDeleted' | 'createdAt' | 'updatedAt'>,
   ): Promise<undefined | BoardWithColumn> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       const [newBoard] = await db
         .insert(board)
         .values({
           ...(pickBy(boardData, isNotNil) as Board),
           userId,
+          organizationId: activeOrgId,
           isDeleted: false,
         })
         .returning()
@@ -58,14 +91,19 @@ export const boardQueries = {
   },
   async create(
     userId: string,
-    boardData: Omit<Board, 'id' | 'userId' | 'isDeleted' | 'createdAt' | 'updatedAt'>,
+    boardData: Omit<Board, 'id' | 'userId' | 'organizationId' | 'isDeleted' | 'createdAt' | 'updatedAt'>,
   ): Promise<undefined | Board> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       const [newBoard] = await db
         .insert(board)
         .values({
           ...(pickBy(boardData, isNotNil) as Board),
           userId,
+          organizationId: activeOrgId,
           isDeleted: false,
         })
         .returning()
@@ -79,9 +117,13 @@ export const boardQueries = {
   },
   async getAll(userId: string, onlyDeleted = false): Promise<undefined | Board[]> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       return await db.query.board.findMany({
-        where: ({ userId: dbUserId, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(isDeleted, onlyDeleted)),
+        where: ({ userId: dbUserId, organizationId, isDeleted }, { eq, and }) =>
+          and(eq(dbUserId, userId), eq(organizationId, activeOrgId), eq(isDeleted, onlyDeleted)),
         orderBy: ({ updatedAt }, { desc }) => desc(updatedAt),
       })
     }
@@ -92,9 +134,18 @@ export const boardQueries = {
   },
   async getWithColumnsAndTasksById(userId: string, boardId: string, onlyDeleted = false) {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       return await db.query.board.findFirst({
         where: (b, { eq, and }) =>
-          and(eq(b.userId, userId), eq(b.id, boardId), eq(b.isDeleted, onlyDeleted)),
+          and(
+            eq(b.userId, userId),
+            eq(b.id, boardId),
+            eq(b.organizationId, activeOrgId),
+            eq(b.isDeleted, onlyDeleted),
+          ),
         with: {
           columns: {
             orderBy: (bc, { asc }) => asc(bc.sort_order),
@@ -132,9 +183,13 @@ export const boardQueries = {
   },
   async unDeleteById(userId: string, boardId: string): Promise<undefined | Board> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       const foundBoard = await db.query.board.findFirst({
-        where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, true)),
+        where: ({ userId: dbUserId, id, organizationId, isDeleted }, { eq, and }) =>
+          and(eq(dbUserId, userId), eq(id, boardId), eq(organizationId, activeOrgId), eq(isDeleted, true)),
       })
 
       if (!foundBoard)
@@ -157,9 +212,13 @@ export const boardQueries = {
   },
   async deleteById(userId: string, boardId: string): Promise<undefined | Board> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       const foundBoard = await db.query.board.findFirst({
-        where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false)),
+        where: ({ userId: dbUserId, id, organizationId, isDeleted }, { eq, and }) =>
+          and(eq(dbUserId, userId), eq(id, boardId), eq(organizationId, activeOrgId), eq(isDeleted, false)),
       })
 
       if (!foundBoard)
@@ -182,10 +241,14 @@ export const boardQueries = {
   },
   async updateById(userId: string, boardObj: UpdateBoard): Promise<undefined | Board> {
     try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return undefined
+
       const updatedBoardObj = pickBy(boardObj, isNotNil)
       const foundBoard = await db.query.board.findFirst({
-        where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(id, boardObj.id), eq(isDeleted, false)),
+        where: ({ userId: dbUserId, id, organizationId, isDeleted }, { eq, and }) =>
+          and(eq(dbUserId, userId), eq(id, boardObj.id), eq(organizationId, activeOrgId), eq(isDeleted, false)),
       })
       if (!foundBoard)
         return undefined
@@ -665,6 +728,88 @@ export const organizationQueries = {
     }
   },
 
+  async getUserOrganizations(
+    userId: string,
+  ): Promise<undefined | Array<{
+    id: string
+    name: string
+    slug: string
+    logo: string | null
+    role: string
+    isOwner: boolean
+  }>> {
+    try {
+      // Get all organizations the user is a member of
+      const memberships = await db.query.member.findMany({
+        where: (m, { eq }) => eq(m.userId, userId),
+        with: {
+          organization: true,
+        },
+        orderBy: (m, { desc }) => desc(m.createdAt),
+      })
+
+      if (!memberships || memberships.length === 0) {
+        return []
+      }
+
+      // Map to the expected return format and determine if user is owner
+      return memberships.map(m => ({
+        id: m.organization.id,
+        name: m.organization.name,
+        slug: m.organization.slug,
+        logo: m.organization.logo,
+        role: m.role,
+        isOwner: m.role === 'owner',
+      }))
+    }
+    catch (error) {
+      console.error('ERROR: while `getUserOrganizations` in organization.\n', error)
+      return undefined
+    }
+  },
+
+  async updateOrganization(
+    userId: string,
+    organizationId: string,
+    data: { name?: string, slug?: string },
+  ): Promise<undefined | { id: string, name: string, slug: string }> {
+    try {
+      // First check if the user is the owner of the organization
+      const membership = await db.query.member.findFirst({
+        where: (m, { eq, and }) => and(
+          eq(m.userId, userId),
+          eq(m.organizationId, organizationId),
+          eq(m.role, 'owner'),
+        ),
+      })
+
+      if (!membership) {
+        return undefined // User is not the owner
+      }
+
+      // Update the organization
+      const [updatedOrg] = await db
+        .update(organization)
+        .set(pickBy(data, isNotNil))
+        .where(eq(organization.id, organizationId))
+        .returning()
+
+      if (!updatedOrg) {
+        return undefined
+      }
+
+      return {
+        id: updatedOrg.id,
+        name: updatedOrg.name,
+        slug: updatedOrg.slug,
+      }
+    }
+    catch (error) {
+      console.error('ERROR: while `updateOrganization` in organization.\n', error)
+      return undefined
+    }
+  },
+
   async getActiveOrganization(userId: string): Promise<undefined | { id: string, name: string }> {
     try {
       // Find the most recent session for the user to get the active organization ID
@@ -715,5 +860,197 @@ export const organizationQueries = {
       console.error('ERROR: while `getActiveOrganization` in organization.\n', error)
       return undefined
     }
+  },
+
+  async setActiveOrganization(
+    userId: string,
+    organizationId: string,
+  ): Promise<boolean> {
+    try {
+      // First check if the user is a member of the organization
+      const membership = await db.query.member.findFirst({
+        where: (m, { eq, and }) => and(
+          eq(m.userId, userId),
+          eq(m.organizationId, organizationId),
+        ),
+      })
+
+      if (!membership) {
+        return false // User is not a member
+      }
+
+      // Update the user's session with the new active organization
+      await db
+        .update(session)
+        .set({ activeOrganizationId: organizationId })
+        .where(eq(session.userId, userId))
+
+      return true
+    }
+    catch (error) {
+      console.error('ERROR: while `setActiveOrganization` in organization.\n', error)
+      return false
+    }
+  },
+} as const
+
+// Invitation and user discovery queries
+export const invitationQueries = {
+  /**
+   * Return users matching query `q` that are NOT members of the user's active organization.
+   * Also excludes the current user and users that already have a pending invite in the org.
+   */
+  async searchUsersNotInActiveOrganization(
+    userId: string,
+    q: string,
+  ): Promise<Array<{ id: string, name: string, email: string, image: string | null }>> {
+    const query = q.trim()
+    if (!query)
+      return []
+
+    const activeOrgId = await getActiveOrganizationId(userId)
+    if (!activeOrgId)
+      return []
+
+    // Current org members
+    const members = await db.query.member.findMany({
+      where: (m, { eq }) => eq(m.organizationId, activeOrgId),
+      columns: {
+        userId: true,
+      },
+    })
+    const memberIds = members.map(m => m.userId)
+
+    // Pending invitations by email in this org
+    const pendingInvites = await db.query.invitation.findMany({
+      where: (i, { and, eq }) => and(eq(i.organizationId, activeOrgId), eq(i.status, 'pending')),
+      columns: {
+        email: true,
+      },
+    })
+    const invitedEmails = new Set(pendingInvites.map(i => i.email.toLowerCase()))
+
+    // Find users by name/email, exclude org members, exclude self
+    const candidates = await db.query.user.findMany({
+      where: (u, { and, or, like, notInArray, ne }) => and(
+        or(
+          like(u.name, `%${query}%`),
+          like(u.email, `%${query}%`),
+        ),
+        memberIds.length > 0 ? notInArray(u.id, memberIds) : undefined,
+        ne(u.id, userId),
+      ),
+      columns: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+      },
+      limit: 20,
+    })
+
+    // Exclude users that already have a pending invitation
+    return candidates.filter(u => !invitedEmails.has((u.email || '').toLowerCase()))
+  },
+
+  /**
+   * Create or reuse a pending invitation for the user's active organization
+   */
+  async inviteUserByEmail(
+    userId: string,
+    email: string,
+    role: string = 'member',
+  ) {
+    const activeOrgId = await getActiveOrganizationId(userId)
+    if (!activeOrgId)
+      return undefined
+
+    const normalizedEmail = email.trim().toLowerCase()
+    if (!normalizedEmail)
+      return undefined
+
+    // If user already a member, ignore
+    const existingUser = await db.query.user.findFirst({
+      where: (u, { eq }) => eq(u.email, normalizedEmail),
+      columns: {
+        id: true,
+      },
+    })
+    if (existingUser) {
+      const existingMembership = await db.query.member.findFirst({
+        where: (m, { and, eq }) => and(eq(m.userId, existingUser.id), eq(m.organizationId, activeOrgId)),
+        columns: {
+          id: true,
+        },
+      })
+      if (existingMembership) {
+        // already a member
+        return undefined
+      }
+    }
+
+    // If a non-expired pending invite exists, return it
+    const existingInvite = await db.query.invitation.findFirst({
+      where: (i, { and, eq }) => and(
+        eq(i.organizationId, activeOrgId),
+        eq(i.email, normalizedEmail),
+        eq(i.status, 'pending'),
+      ),
+    })
+
+    if (existingInvite) {
+      return existingInvite
+    }
+
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7) // 7 days
+
+    const [newInvite] = await db
+      .insert(invitation)
+      .values({
+        id: nanoid(),
+        organizationId: activeOrgId,
+        email: normalizedEmail,
+        role,
+        status: 'pending',
+        expiresAt,
+        inviterId: userId,
+      })
+      .returning()
+
+    return newInvite
+  },
+} as const
+
+export const organizationStatsQueries = {
+  async getActiveOrganizationMemberCount(userId: string): Promise<number | undefined> {
+    const activeOrgId = await getActiveOrganizationId(userId)
+    if (!activeOrgId)
+      return undefined
+
+    const rows = await db.query.member.findMany({
+      where: (m, { eq }) => eq(m.organizationId, activeOrgId),
+      columns: {
+        id: true,
+      },
+    })
+    return rows.length
+  },
+
+  async getPendingInvitationCountForUser(userEmail: string): Promise<number> {
+    const normalized = (userEmail ?? '').trim().toLowerCase()
+    if (!normalized)
+      return 0
+
+    const rows = await db.query.invitation.findMany({
+      where: (i, { and, eq, gt }) => and(
+        eq(i.email, normalized),
+        eq(i.status, 'pending'),
+        gt(i.expiresAt, new Date()),
+      ),
+      columns: {
+        id: true,
+      },
+    })
+    return rows.length
   },
 } as const

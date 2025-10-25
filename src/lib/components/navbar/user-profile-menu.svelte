@@ -1,7 +1,7 @@
 <script lang='ts'>
   import { authClient } from '$lib/auth-client'
   import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar'
-  import Button, { buttonVariants } from '$lib/components/ui/button/button.svelte'
+  import { buttonVariants } from '$lib/components/ui/button/button.svelte'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js'
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte'
   import { cn, getPrefix } from '$lib/utils'
@@ -19,17 +19,17 @@
   </div>
 {:else if user}
   <DropdownMenu.Root>
-    <DropdownMenu.Trigger>
-      <Button size='icon' variant='outline'>
-        <Avatar class='bg-transparent'>
-          <AvatarImage src={user?.image ?? ''} alt={user?.name ?? ''} class='
-            object-cover
-          ' />
-          <AvatarFallback class='bg-transparent'>
-            {getPrefix(user?.name ?? '')}
-          </AvatarFallback>
-        </Avatar>
-      </Button>
+    <DropdownMenu.Trigger class={cn(buttonVariants({ size: 'icon', variant: 'outline' }), `
+      cursor-pointer
+    `)}>
+      <Avatar class='bg-transparent'>
+        <AvatarImage src={user?.image ?? ''} alt={user?.name ?? ''} class='
+          object-cover
+        ' />
+        <AvatarFallback class='bg-transparent'>
+          {getPrefix(user?.name ?? '')}
+        </AvatarFallback>
+      </Avatar>
     </DropdownMenu.Trigger>
     <DropdownMenu.Content class='sm:mr-8'>
       <DropdownMenu.Label>

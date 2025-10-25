@@ -1,16 +1,34 @@
 import type { Actions, PageServerLoad } from './$types'
-import { boardQueries } from '$lib/server/db/queries'
+import { boardQueries, organizationStatsQueries } from '$lib/server/db/queries'
 import { fail, redirect } from '@sveltejs/kit'
 
 export const load: PageServerLoad = async (events) => {
   const { email, id, name } = events?.locals?.user ?? {}
+  let membersCount = 0
+  let pendingInvitesCount = 0
 
   if (!id)
     redirect(307, '/login')
 
+  try {
+    membersCount = (await organizationStatsQueries.getActiveOrganizationMemberCount(id)) ?? 0
+  }
+  catch (error) {
+    console.error('Error fetching organization member count:', error)
+  }
+
+  try {
+    pendingInvitesCount = await organizationStatsQueries.getPendingInvitationCountForUser(email || '')
+  }
+  catch (error) {
+    console.error('Error fetching pending invitations count:', error)
+  }
+
   return {
     user: { id, email, name },
     boards: (await boardQueries.getAll(id)) ?? [],
+    membersCount,
+    pendingInvitesCount,
   }
 }
 

@@ -5,6 +5,7 @@
   import BoardFilters from './_components/board-filters.svelte'
   import BoardList from './_components/board-list.svelte'
   import BoardStats from './_components/board-stats.svelte'
+  import InvitePeopleDialog from './_components/invite-people-dialog.svelte'
 
   const { data }: PageProps = $props()
 
@@ -27,7 +28,12 @@
   </p>
   <form method='post' id={formId} use:enhance>
   </form>
-  <BoardStats boards={data.boards} />
+
+  <div class='mt-4'>
+    <InvitePeopleDialog />
+  </div>
+
+  <BoardStats boards={data.boards} memberCount={data.membersCount} pendingInvitesCount={data.pendingInvitesCount} />
   <BoardFilters {formId} {viewMode} {onViewModeChange} />
   <BoardList boards={data.boards} {viewMode} {formId} />
   <!-- TODO: implement Table view(list-view) -->
