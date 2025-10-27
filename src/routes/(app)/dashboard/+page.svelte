@@ -18,6 +18,15 @@
   const formId = 'create-board-id'
 </script>
 
+<svelte:head>
+  <title>Dashboard Page</title>
+  <meta
+    name='description'
+    content={`List all the boards for ${data.user.name}`}
+  />
+  <meta name='author' content={`${data.user.name} - ${data.user.email}`} />
+</svelte:head>
+
 <div class='
   mb-6
   sm:mb-8

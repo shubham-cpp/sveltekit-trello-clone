@@ -5,6 +5,7 @@
   import TrelloIcon from '@lucide/svelte/icons/trello'
   import UserPlusIcon from '@lucide/svelte/icons/user-plus'
   import UserIcon from '@lucide/svelte/icons/users'
+  import ViewInvitationsDialog from './view-invitations-dialog.svelte'
 
   interface BoardStatsProps {
     boards: Board[]
@@ -139,12 +140,7 @@
             text-xs font-medium text-primary-foreground/70
             sm:text-sm
           '>Pending Invites</p>
-          <p class='
-            text-xl font-bold
-            sm:text-2xl
-          '>
-            {pendingInvitesCount}
-          </p>
+          <ViewInvitationsDialog count={pendingInvitesCount} />
         </div>
         <div
           class='

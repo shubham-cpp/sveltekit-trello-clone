@@ -26,7 +26,7 @@
       <li>
         <a href={`/boards/${board.id}`}>
           <Card.Root class='
-            group transition-shadow
+            group h-full transition-shadow
             hover:shadow-lg
           '>
             <Card.Header>

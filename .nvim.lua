@@ -45,7 +45,38 @@ lspconfig.eslint.setup({
 		rulesCustomizations = customizations,
 	},
 })
-local null_ls, ok = pcall(require,'null-ls')
+vim.lsp.config("eslint", {
+	filetypes = {
+		"javascript",
+		"javascriptreact",
+		"javascript.jsx",
+		"typescript",
+		"typescriptreact",
+		"typescript.tsx",
+		"vue",
+		"html",
+		"markdown",
+		"json",
+		"jsonc",
+		"yaml",
+		"toml",
+		"xml",
+		"gql",
+		"graphql",
+		"astro",
+		"svelte",
+		"css",
+		"less",
+		"scss",
+		"pcss",
+		"postcss",
+	},
+	settings = {
+		-- Silent the stylistic rules in you IDE, but still auto fix them
+		rulesCustomizations = customizations,
+	},
+})
+local ok, null_ls = pcall(require, "null-ls")
 if ok then
 	null_ls.disable({ name = "prettierd" })
 end

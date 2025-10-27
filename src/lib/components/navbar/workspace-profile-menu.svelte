@@ -1,5 +1,6 @@
 <script lang='ts'>
   import type { UserOrganizations } from './data.remote'
+  import { invalidateAll } from '$app/navigation'
   import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar'
   import { buttonVariants } from '$lib/components/ui/button/button.svelte'
   import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js'
@@ -39,6 +40,7 @@
     if ('organizations' in result) {
       data = result
     }
+    invalidateAll()
   }
 
 </script>

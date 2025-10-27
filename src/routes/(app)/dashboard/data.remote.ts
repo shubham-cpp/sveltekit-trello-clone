@@ -65,3 +65,68 @@ export const inviteUser = command(inviteUserSchema, async ({ email, role }) => {
     return fail(500, { error: 'Failed to create invitation' })
   }
 })
+
+// Pending invitations: list, accept, reject
+const acceptRejectSchema = z.object({
+  invitationId: z.string().trim().min(1),
+})
+
+export const listPendingInvitations = query(async () => {
+  const { locals } = getRequestEvent()
+  const email = locals.user?.email
+
+  if (!email) {
+    return []
+  }
+
+  try {
+    const items = await invitationQueries.listPendingForUser(email)
+    return Array.isArray(items) ? items : []
+  }
+  catch (error) {
+    console.error('Error listing pending invitations:', error)
+    return fail(500, { error: 'Failed to load invitations' })
+  }
+})
+
+export const acceptInvitationRequest = command(acceptRejectSchema, async ({ invitationId }) => {
+  const { locals } = getRequestEvent()
+  const userId = locals.user?.id
+
+  if (!userId) {
+    return redirect(307, '/login')
+  }
+
+  try {
+    const ok = await invitationQueries.acceptInvitation(userId, invitationId)
+    if (!ok) {
+      return fail(400, { error: 'Invitation is no longer valid' })
+    }
+    return { success: true }
+  }
+  catch (error) {
+    console.error('Error accepting invitation:', error)
+    return fail(500, { error: 'Failed to accept invitation' })
+  }
+})
+
+export const rejectInvitationRequest = command(acceptRejectSchema, async ({ invitationId }) => {
+  const { locals } = getRequestEvent()
+  const userId = locals.user?.id
+
+  if (!userId) {
+    return redirect(307, '/login')
+  }
+
+  try {
+    const ok = await invitationQueries.rejectInvitation(userId, invitationId)
+    if (!ok) {
+      return fail(400, { error: 'Invitation is no longer valid' })
+    }
+    return { success: true }
+  }
+  catch (error) {
+    console.error('Error rejecting invitation:', error)
+    return fail(500, { error: 'Failed to reject invitation' })
+  }
+})
