@@ -1,7 +1,7 @@
 import { form, getRequestEvent } from '$app/server'
 import { auth } from '$lib/server/auth'
 import { signupSchema } from '$lib/zod-schemas'
-import { fail, redirect } from '@sveltejs/kit'
+import { fail } from '@sveltejs/kit'
 
 export const signUp = form(
   signupSchema,

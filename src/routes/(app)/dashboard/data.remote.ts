@@ -1,5 +1,5 @@
 import { command, getRequestEvent, query } from '$app/server'
-import { invitationQueries } from '$lib/server/db/queries'
+import { invitationQueries, organizationQueries } from '$lib/server/db/queries'
 import { fail, redirect } from '@sveltejs/kit'
 import { z } from 'zod/v4'
 
@@ -65,6 +65,37 @@ export const inviteUser = command(inviteUserSchema, async ({ email, role }) => {
     return fail(500, { error: 'Failed to create invitation' })
   }
 })
+
+// Search organization members (for 'Created by' filter)
+const searchMembersSchema = z.object({
+  query: z.string(),
+})
+
+export const searchOrganizationMembers = query(
+  searchMembersSchema,
+  async ({ query }) => {
+    const { locals } = getRequestEvent()
+    const userId = locals.user?.id
+
+    if (!userId) {
+      return fail(401, { error: 'Unauthorized' })
+    }
+
+    try {
+      const activeOrg = await organizationQueries.getActiveOrganization(userId)
+      if (!activeOrg) {
+        return fail(400, { error: 'No active organization' })
+      }
+
+      const members = await organizationQueries.searchMembers(activeOrg.id, query)
+      return Array.isArray(members) ? members : []
+    }
+    catch (error) {
+      console.error('Error searching organization members:', error)
+      return fail(500, { error: 'Failed to search organization members' })
+    }
+  },
+)
 
 // Pending invitations: list, accept, reject
 const acceptRejectSchema = z.object({

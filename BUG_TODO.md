@@ -7,13 +7,13 @@ At the current moment, even though I've accepted the invite we still see the "Ac
 - set that as default value again
 - update the session cookie's name since its showing old data(because we're caching for 5 mins)
 
-# 3. update the db-seed.ts
+# ~~3. update the db-seed.ts - DONE~~
 - so that we have different dates for created at
 
 # 4. implement table view for data `/dashboard`
 - with client-side sorting functionality
 
-# 5. Implement filter and search functionality on `/dashboard` route
+# ~~5. Implement filter and search functionality on `/dashboard` route - DONE~~
 
 # 6. Implement filter and search functionality on `/boards/{boardId}` route
 
