@@ -1,8 +1,14 @@
 <script lang='ts'>
+  import { authClient } from '$lib/auth-client'
   import TrelloIcon from '@lucide/svelte/icons/trello'
+
+  const session = authClient.useSession()
+  const isLoggedIn = $derived($session.data?.user.id)
 </script>
 
-<a href='/' aria-label='go home' class='flex items-center gap-x-2'>
+<a href={isLoggedIn ? '/dashboard' : '/'}
+   aria-label={isLoggedIn ? 'go to dashboard' : 'go to home'}
+   class='flex items-center gap-x-2'>
   <TrelloIcon class='
     size-8 text-green-600
     dark:text-green-500

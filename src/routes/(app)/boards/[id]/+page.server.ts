@@ -51,6 +51,25 @@ export const actions: Actions = {
 
     return { form }
   },
+
+  deleteBoard: async (event) => {
+    const { params, locals } = event
+    const userId = locals.user?.id
+    const boardId = params.id
+
+    if (!boardId)
+      return fail(400, { error: 'Board id is required' })
+    if (!userId)
+      return redirect(307, '/login')
+
+    const deleted = await boardQueries.deleteById(userId, boardId)
+
+    if (!deleted) {
+      return fail(500, { error: 'Failed to delete board' })
+    }
+
+    redirect(303, '/dashboard')
+  },
   // addNewTask: async (event) => {
   //   // addNewTask action invoked
   //   const { params, locals, request } = event

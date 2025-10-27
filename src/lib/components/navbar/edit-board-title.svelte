@@ -1,6 +1,7 @@
 <script lang='ts'>
   import type { SubmitFunction } from '@sveltejs/kit'
   import { enhance } from '$app/forms'
+  import { Button, buttonVariants } from '$lib/components/ui/button'
   import * as Dialog from '$lib/components/ui/dialog/index.js'
   import { Input } from '$lib/components/ui/input/index.js'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
@@ -8,7 +9,7 @@
   import { COLOR_VALUES } from '$lib/zod-schemas'
   import EllipsisIcon from '@lucide/svelte/icons/ellipsis'
   import { tick } from 'svelte'
-  import { buttonVariants } from '../ui/button'
+  import DeleteDashboardSection from './delete-dashboard-section.svelte';
 
   let title = $state(boardDetails.title ?? '')
   let color = $state(boardDetails.color ?? COLOR_VALUES[0])
@@ -90,10 +91,14 @@
 
       <div class='flex items-center justify-end gap-2 pt-2'>
         <Dialog.Close type='button' class={buttonVariants({ variant: 'outline' })}
-        >Cancel</Dialog.Close
         >
-        <button type='submit' class={buttonVariants({ variant: 'default' })}>Save</button>
+          Cancel
+        </Dialog.Close>
+        <Button type='submit'>Save</Button>
       </div>
     </form>
+
+    <!-- Danger zone: delete board -->
+    <DeleteDashboardSection />
   </Dialog.Content>
 </Dialog.Root>

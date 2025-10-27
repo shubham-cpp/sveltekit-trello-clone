@@ -193,8 +193,13 @@ export const boardQueries = {
         return undefined
 
       const foundBoard = await db.query.board.findFirst({
-        where: ({ userId: dbUserId, id, organizationId, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(id, boardId), eq(organizationId, activeOrgId), eq(isDeleted, true)),
+        where: (b, op) =>
+          op.and(
+            op.eq(b.userId, userId),
+            op.eq(b.id, boardId),
+            op.eq(b.organizationId, activeOrgId),
+            op.eq(b.isDeleted, true),
+          ),
       })
 
       if (!foundBoard)
@@ -269,6 +274,38 @@ export const boardQueries = {
     catch (error) {
       console.error('ERROR: while `updateById` in boards.\n', error)
       return undefined
+    }
+  },
+
+  /**
+   * Permanently delete a board that is already soft-deleted.
+   * Ensures the board belongs to the user and is marked as deleted before hard-deleting.
+   * Cascades will remove dependent rows (columns/tasks) via FK onDelete: 'cascade'.
+   */
+  async deletePermanentlyById(userId: string, boardId: string): Promise<boolean> {
+    try {
+      const activeOrgId = await getActiveOrganizationId(userId)
+      if (!activeOrgId)
+        return false
+
+      const foundBoard = await db.query.board.findFirst({
+        where: ({ userId: dbUserId, id, organizationId, isDeleted }, { eq, and }) =>
+          and(eq(dbUserId, userId), eq(id, boardId), eq(organizationId, activeOrgId), eq(isDeleted, true)),
+      })
+
+      if (!foundBoard)
+        return false
+
+      const [deleted] = await db
+        .delete(board)
+        .where(eq(board.id, foundBoard.id))
+        .returning()
+
+      return !!deleted
+    }
+    catch (error) {
+      console.error('ERROR: while `deletePermanentlyById` in boards.\n', error)
+      return false
     }
   },
 } as const

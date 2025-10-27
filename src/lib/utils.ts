@@ -1,4 +1,5 @@
 import type { ClassValue } from 'clsx'
+import { DateFormatter } from '@internationalized/date'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -16,6 +17,7 @@ export function getPrefix(name: string) {
   return p
 }
 
+export const df = new DateFormatter('en-IN', { dateStyle: 'long' })
 export type ViewMode = 'grid' | 'list'
 
 export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T

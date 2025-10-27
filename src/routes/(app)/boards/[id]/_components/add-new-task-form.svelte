@@ -11,12 +11,11 @@
   import * as Popover from '$lib/components/ui/popover'
   import * as Select from '$lib/components/ui/select'
   import { Textarea } from '$lib/components/ui/textarea'
-  import { cn } from '$lib/utils'
+  import { cn, df } from '$lib/utils'
   import { addNewTaskSchema, PRIORITY_VALUES } from '$lib/zod-schemas'
 
   import {
     CalendarDate,
-    DateFormatter,
     getLocalTimeZone,
     parseDate,
     today,
@@ -33,7 +32,6 @@
     extends Pick<ButtonProps, 'class' | 'variant'> {
     targetColumnId: string
   }
-  const df = new DateFormatter('en-IN', { dateStyle: 'long' })
   const todayDate = today(getLocalTimeZone())
 
   let dialogOpen = $state(false)

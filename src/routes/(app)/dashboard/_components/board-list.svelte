@@ -4,6 +4,7 @@
   import Badge from '$lib/components/ui/badge/badge.svelte'
   import * as Card from '$lib/components/ui/card/index.js'
   import { cn } from '$lib/utils'
+  import { DateFormatter } from '@internationalized/date'
   import PlusIcon from '@lucide/svelte/icons/plus'
 
   interface BoardListProps {
@@ -13,6 +14,9 @@
   }
   // TODO: use the `viewMode` prop and implement a table like view for  viewMode == "list"
   const { boards, formId }: BoardListProps = $props()
+
+  // const df = new DateFormatter('en-IN', { day: 'numeric', month: 'short', year: '2-digit' })
+  const df = new DateFormatter('en-IN', { dateStyle: 'medium' })
 </script>
 
 <section>
@@ -26,7 +30,7 @@
       <li>
         <a href={`/boards/${board.id}`}>
           <Card.Root class='
-            group h-full transition-shadow
+            group h-full justify-between transition-shadow
             hover:shadow-lg
           '>
             <Card.Header>
@@ -39,21 +43,18 @@
                 group-hover:text-blue-400
                 sm:text-lg
               '
-              >{board.title}</Card.Title
               >
+                {board.title}
+              </Card.Title>
               <Card.Description>{board.description}</Card.Description>
             </Card.Header>
-            <Card.Content>
-              <div
-                class='
-                  flex flex-col gap-1 space-y-1 text-xs
-                  text-primary-foreground/70
-                  sm:flex-row sm:items-center sm:justify-between sm:space-y-0
-                '
-              >
-                <span>Create: {new Date(board.createdAt).toLocaleDateString()}</span>
-                <span>Updated: {new Date(board.updatedAt).toLocaleDateString()}</span>
-              </div>
+            <Card.Content class='
+              flex items-center justify-between gap-1 space-y-1 text-xs
+              text-primary-foreground/70
+              sm:space-y-0
+            '>
+              <span>Create: {df.format(new Date(board.createdAt))}</span>
+              <span>Updated: {df.format(new Date(board.updatedAt))}</span>
             </Card.Content>
           </Card.Root>
         </a>

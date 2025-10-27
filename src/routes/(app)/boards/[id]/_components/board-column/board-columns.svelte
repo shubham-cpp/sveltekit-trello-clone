@@ -6,8 +6,7 @@
   import Badge from '$lib/components/ui/badge/badge.svelte'
   import Button from '$lib/components/ui/button/button.svelte'
   import * as Card from '$lib/components/ui/card/index.js'
-  import { cn } from '$lib/utils'
-  import { DateFormatter } from '@internationalized/date'
+  import { df } from '$lib/utils'
   import CalendarIcon from '@lucide/svelte/icons/calendar'
   import EllipsisIcon from '@lucide/svelte/icons/ellipsis'
   import UserIcon from '@lucide/svelte/icons/user'
@@ -25,7 +24,6 @@
   type NewSortOrder = UpdateTaskSortOrderSchema['newSortOrder'][0]
 
   const flipDurationMs = 250
-  const df = new DateFormatter('en-IN', { dateStyle: 'medium' })
 
   const { board }: BoardColumnsProps = $props()
 
@@ -217,7 +215,7 @@
               </div>
             {/if}
           </div>
-          <div class={cn('h-2 w-2 shrink-0 rounded-full', getPriorityColor(t.priority))}></div>
+          <div class={['h-2 w-2 shrink-0 rounded-full', getPriorityColor(t.priority)]}></div>
         </div>
       </div>
     </Card.Content>
