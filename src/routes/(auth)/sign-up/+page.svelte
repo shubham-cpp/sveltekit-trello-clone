@@ -1,84 +1,148 @@
 <script lang='ts'>
-  import type { PageProps } from './$types'
   import { goto } from '$app/navigation'
-  import { authClient } from '$lib/auth-client'
-  import * as Form from '$lib/components/ui/form/index.js'
+  import { Button } from '$lib/components/ui/button'
+  import * as Field from '$lib/components/ui/field'
   import { Input } from '$lib/components/ui/input/index.js'
   import { signupSchema } from '$lib/zod-schemas'
   import { toast } from 'svelte-sonner'
-  import { superForm } from 'sveltekit-superforms'
-  import { zod4Client as zodClient } from 'sveltekit-superforms/adapters'
+  import { signUp } from './data.remote'
 
-  const { data }: PageProps = $props()
+  const formData = signUp.fields
 
-  const form = superForm(data.form, {
-    validators: zodClient(signupSchema),
-    onUpdated: async ({ form }) => {
-      if (!form.valid)
-        return
-      try {
-        const { firstName, lastName, email, password } = form.data
-
-        const { error } = await authClient.signUp.email({
-          name: `${firstName} ${lastName}`,
-          email,
-          password,
-        })
-        if (error?.message)
-          throw new Error(error?.message)
-
-        await goto('/login')
-      }
-      catch {
-        toast.error('Server Error', {
-          description: 'Some error occurred while sign-up. Please try again later',
-        })
-      }
-    },
+  $effect(() => {
+    if ((signUp.result as any)?.status === 201) {
+      toast.success((signUp.result as any)?.message || 'Account created successfully.')
+      goto('/login')
+    }
   })
-
-  const { form: formData, enhance } = form
 </script>
 
-<form method='POST' use:enhance>
+<form
+  {...signUp.preflight(signupSchema)}
+  oninput={() => signUp.validate()}
+  class='space-y-4'
+>
   <div class='grid grid-cols-2 gap-3'>
-    <Form.Field {form} name='firstName'>
-      <Form.Control>
-        {#snippet children({ props })}
-          <Form.Label>First Name</Form.Label>
-          <Input {...props} bind:value={$formData.firstName} />
-        {/snippet}
-      </Form.Control>
-      <Form.FieldErrors />
-    </Form.Field>
-    <Form.Field {form} name='lastName'>
-      <Form.Control>
-        {#snippet children({ props })}
-          <Form.Label>Last Name</Form.Label>
-          <Input {...props} bind:value={$formData.lastName} />
-        {/snippet}
-      </Form.Control>
-      <Form.FieldErrors />
-    </Form.Field>
+    <Field.Field aria-invalid={!!formData.firstName.issues()?.length}>
+      <Field.Label
+        aria-invalid={!!formData.firstName.issues()?.length}
+        for='firstName'
+      >
+        First Name
+      </Field.Label>
+      <Input
+        {...formData.firstName.as('text')}
+        id='firstName'
+        placeholder='First name'
+        aria-invalid={!!formData.firstName.issues()?.length}
+      />
+      <Field.Error
+        class='
+          hidden
+          aria-invalid:block
+        '
+        aria-invalid={!!formData.firstName.issues()?.length}
+      >
+        {formData.firstName.issues()?.map(i => i.message)?.join(',')}
+      </Field.Error>
+    </Field.Field>
+
+    <Field.Field aria-invalid={!!formData.lastName.issues()?.length}>
+      <Field.Label
+        aria-invalid={!!formData.lastName.issues()?.length}
+        for='lastName'
+      >
+        Last Name
+      </Field.Label>
+      <Input
+        {...formData.lastName.as('text')}
+        id='lastName'
+        placeholder='Last name'
+        aria-invalid={!!formData.lastName.issues()?.length}
+      />
+      <Field.Error
+        class='
+          hidden
+          aria-invalid:block
+        '
+        aria-invalid={!!formData.lastName.issues()?.length}
+      >
+        {formData.lastName.issues()?.map(i => i.message)?.join(',')}
+      </Field.Error>
+    </Field.Field>
   </div>
 
-  <Form.Field {form} name='email'>
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Email</Form.Label>
-        <Input {...props} type='email' bind:value={$formData.email} />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
-  <Form.Field {form} name='password'>
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Password</Form.Label>
-        <Input {...props} type='password' bind:value={$formData.password} />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
-  <Form.Button class='w-full'>Submit</Form.Button>
+  <Field.Field aria-invalid={!!formData.email.issues()?.length}>
+    <Field.Label
+      aria-invalid={!!formData.email.issues()?.length}
+      for='email'
+    >
+      Email
+    </Field.Label>
+    <Input
+      {...formData.email.as('email')}
+      id='email'
+      placeholder='you@example.com'
+      aria-invalid={!!formData.email.issues()?.length}
+    />
+    <Field.Error
+      class='
+        hidden
+        aria-invalid:block
+      '
+      aria-invalid={!!formData.email.issues()?.length}
+    >
+      {formData.email.issues()?.map(i => i.message)?.join(',')}
+    </Field.Error>
+  </Field.Field>
+
+  <Field.Field aria-invalid={!!formData._password.issues()?.length}>
+    <Field.Label
+      aria-invalid={!!formData._password.issues()?.length}
+      for='_password'
+    >
+      Password
+    </Field.Label>
+    <Input
+      {...formData._password.as('password')}
+      id='_password'
+      placeholder='********'
+      aria-invalid={!!formData._password.issues()?.length}
+    />
+    <Field.Error
+      class='
+        hidden
+        aria-invalid:block
+      '
+      aria-invalid={!!formData._password.issues()?.length}
+    >
+      {formData._password.issues()?.map(i => i.message)?.join(',')}
+    </Field.Error>
+  </Field.Field>
+
+  <Field.Field aria-invalid={!!formData._confirmPassword.issues()?.length}>
+    <Field.Label
+      aria-invalid={!!formData._confirmPassword.issues()?.length}
+      for='_confirmPassword'
+    >
+      Confirm Password
+    </Field.Label>
+    <Input
+      {...formData._confirmPassword.as('password')}
+      id='_confirmPassword'
+      placeholder='********'
+      aria-invalid={!!formData._confirmPassword.issues()?.length}
+    />
+    <Field.Error
+      class='
+        hidden
+        aria-invalid:block
+      '
+      aria-invalid={!!formData._confirmPassword.issues()?.length}
+    >
+      {formData._confirmPassword.issues()?.map(i => i.message)?.join(',')}
+    </Field.Error>
+  </Field.Field>
+
+  <Button type='submit' class='w-full'>Submit</Button>
 </form>

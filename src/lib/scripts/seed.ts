@@ -48,6 +48,8 @@ export default async function dbSeed(): Promise<ReturnType[]> {
     const organization = randomUser.memberships[0].organization
 
     const boardId = nanoid()
+    const boardCreatedAt = faker.date.past({ years: 1 })
+    const boardUpdatedAt = faker.date.between({ from: boardCreatedAt, to: new Date() })
     boardPromises.push(
       db.insert(schema.board).values({
         id: boardId,
@@ -57,8 +59,8 @@ export default async function dbSeed(): Promise<ReturnType[]> {
         organizationId: organization.id,
         color: faker.helpers.arrayElement(COLOR_VALUES),
         isDeleted: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: boardCreatedAt,
+        updatedAt: boardUpdatedAt,
       }),
     )
 
@@ -69,6 +71,8 @@ export default async function dbSeed(): Promise<ReturnType[]> {
       const columnId = nanoid()
       columnIds.push(columnId)
 
+      const columnCreatedAt = faker.date.between({ from: boardCreatedAt, to: new Date() })
+      const columnUpdatedAt = faker.date.between({ from: columnCreatedAt, to: new Date() })
       columnPromises.push(
         db.insert(schema.boardColumn).values({
           id: columnId,
@@ -87,14 +91,16 @@ export default async function dbSeed(): Promise<ReturnType[]> {
           ]),
           sort_order: j,
           boardId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+          createdAt: columnCreatedAt,
+          updatedAt: columnUpdatedAt,
         }),
       )
 
       const taskCount = faker.number.int({ min: 2, max: 8 })
 
       for (let k = 0; k < taskCount; k++) {
+        const taskCreatedAt = faker.date.between({ from: columnCreatedAt, to: new Date() })
+        const taskUpdatedAt = faker.date.between({ from: taskCreatedAt, to: new Date() })
         taskPromises.push(
           db.insert(schema.task).values({
             id: nanoid(),
@@ -116,8 +122,8 @@ export default async function dbSeed(): Promise<ReturnType[]> {
             assignee: faker.helpers.maybe(() => faker.helpers.arrayElement(users).id, { probability: 0.6 }),
             boardId,
             boardColumnId: columnId,
-            createdAt: new Date(),
-            updatedAt: new Date(),
+            createdAt: taskCreatedAt,
+            updatedAt: taskUpdatedAt,
           }),
         )
       }
