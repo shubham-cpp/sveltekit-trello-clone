@@ -6,10 +6,18 @@
   import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte'
   import { cn, getPrefix } from '$lib/utils'
   import UserIcon from '@lucide/svelte/icons/user'
+  import AccountDialog from './account-dialog.svelte'
   import SignOutButton from './sign-out-button.svelte'
 
   const session = authClient.useSession()
   const user = $derived($session?.data?.user)
+
+  // Controller for Account dialog
+  let accountDlg = $state<{ open: boolean }>({ open: false })
+
+  function openAccountDialog() {
+    accountDlg.open = true
+  }
 </script>
 
 {#if $session?.isPending}
@@ -40,7 +48,7 @@
       </DropdownMenu.Label>
       <DropdownMenu.Separator />
       <DropdownMenu.Group>
-        <DropdownMenu.Item>
+        <DropdownMenu.Item onclick={openAccountDialog}>
           <UserIcon /> Account
         </DropdownMenu.Item>
       </DropdownMenu.Group>
@@ -48,6 +56,9 @@
       <SignOutButton />
     </DropdownMenu.Content>
   </DropdownMenu.Root>
+
+  <!-- Account dialog mounted once, toggled via controller -->
+  <AccountDialog bind:controller={accountDlg} userName={user?.name ?? ''} userEmail={user?.email ?? ''} />
 {:else}
   <a href='/login' class={cn(buttonVariants(), 'cursor-pointer')}> Login</a>
 {/if}

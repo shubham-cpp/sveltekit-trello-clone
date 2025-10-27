@@ -9,7 +9,7 @@
   import { COLOR_VALUES } from '$lib/zod-schemas'
   import EllipsisIcon from '@lucide/svelte/icons/ellipsis'
   import { tick } from 'svelte'
-  import DeleteDashboardSection from './delete-dashboard-section.svelte';
+  import DeleteDashboardSection from './delete-dashboard-section.svelte'
 
   let title = $state(boardDetails.title ?? '')
   let color = $state(boardDetails.color ?? COLOR_VALUES[0])

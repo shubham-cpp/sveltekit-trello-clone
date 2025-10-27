@@ -22,13 +22,17 @@ CREATE TABLE `board` (
 	`color` text DEFAULT 'bg-blue-500',
 	`is_deleted` integer DEFAULT false,
 	`user_id` text NOT NULL,
+	`organization_id` text NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`organization_id`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE INDEX `board_user_id_idx` ON `board` (`user_id`);--> statement-breakpoint
+CREATE INDEX `board_organization_id_idx` ON `board` (`organization_id`);--> statement-breakpoint
 CREATE INDEX `board_user_id_is_deleted_idx` ON `board` (`user_id`,`is_deleted`);--> statement-breakpoint
+CREATE INDEX `board_user_org_is_deleted_idx` ON `board` (`user_id`,`organization_id`,`is_deleted`);--> statement-breakpoint
 CREATE TABLE `board_column` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,
@@ -45,22 +49,27 @@ CREATE TABLE `invitation` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
 	`email` text NOT NULL,
-	`role` text,
+	`role` text DEFAULT 'member' NOT NULL,
 	`status` text DEFAULT 'pending' NOT NULL,
 	`expires_at` integer NOT NULL,
 	`inviter_id` text NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`inviter_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE INDEX `invitation_email_idx` ON `invitation` (`email`);--> statement-breakpoint
 CREATE INDEX `invitation_org_id_status_idx` ON `invitation` (`organization_id`,`status`);--> statement-breakpoint
+CREATE INDEX `invitation_expires_at_idx` ON `invitation` (`expires_at`);--> statement-breakpoint
+CREATE UNIQUE INDEX `invitation_org_email_status_unique` ON `invitation` (`organization_id`,`email`,`status`);--> statement-breakpoint
 CREATE TABLE `member` (
 	`id` text PRIMARY KEY NOT NULL,
 	`organization_id` text NOT NULL,
 	`user_id` text NOT NULL,
 	`role` text DEFAULT 'member' NOT NULL,
-	`created_at` integer NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	FOREIGN KEY (`organization_id`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE cascade,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
@@ -74,7 +83,8 @@ CREATE TABLE `organization` (
 	`name` text NOT NULL,
 	`slug` text NOT NULL,
 	`logo` text,
-	`created_at` integer NOT NULL,
+	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`metadata` text
 );
 --> statement-breakpoint
@@ -86,15 +96,18 @@ CREATE TABLE `session` (
 	`expires_at` integer NOT NULL,
 	`token` text NOT NULL,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	`updated_at` integer NOT NULL,
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
 	`ip_address` text,
 	`user_agent` text,
 	`user_id` text NOT NULL,
 	`active_organization_id` text,
-	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade,
+	FOREIGN KEY (`active_organization_id`) REFERENCES `organization`(`id`) ON UPDATE no action ON DELETE set null
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
+CREATE INDEX `session_user_id_idx` ON `session` (`user_id`);--> statement-breakpoint
+CREATE INDEX `session_active_organization_id_idx` ON `session` (`active_organization_id`);--> statement-breakpoint
 CREATE TABLE `task` (
 	`id` text PRIMARY KEY NOT NULL,
 	`title` text NOT NULL,

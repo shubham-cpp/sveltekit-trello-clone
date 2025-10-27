@@ -29,6 +29,10 @@ export const organization = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
     metadata: text('metadata'),
   },
   t => [
@@ -119,6 +123,10 @@ export const member = sqliteTable(
     createdAt: integer('created_at', { mode: 'timestamp_ms' })
       .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
       .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
   },
   t => [
     // Fast lookups by org/user and de-duplication across the join
@@ -137,12 +145,19 @@ export const invitation = sqliteTable(
       .notNull()
       .references(() => organization.id, { onDelete: 'cascade' }),
     email: text('email').notNull(),
-    role: text('role'),
+    role: text('role').default('member').notNull(),
     status: text('status').default('pending').notNull(),
     expiresAt: integer('expires_at', { mode: 'timestamp_ms' }).notNull(),
     inviterId: text('inviter_id')
       .notNull()
       .references(() => user.id, { onDelete: 'cascade' }),
+    createdAt: integer('created_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .notNull(),
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
+      .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
+      .$onUpdate(() => /* @__PURE__ */ new Date())
+      .notNull(),
   },
   t => [
     // Common queries: list invitations by org and status, lookup by email

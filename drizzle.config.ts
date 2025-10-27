@@ -1,3 +1,4 @@
+/* eslint-disable node/prefer-global/process */
 import { defineConfig } from 'drizzle-kit'
 
 if (!process.env.DATABASE_URL)

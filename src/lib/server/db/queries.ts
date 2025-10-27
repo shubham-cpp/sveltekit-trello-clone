@@ -1,10 +1,10 @@
 import type { MoveTaskColumnSchema, UpdateTaskSortOrderSchema } from '$lib/zod-schemas'
 import type { Board, BoardColumn, BoardTask } from './types'
-import { and, eq, gt, inArray, sql } from 'drizzle-orm'
+import { and, eq, inArray, sql } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
 import { nanoid } from 'nanoid'
 import { db } from '.'
-import { board, boardColumn, invitation, member, organization, session, task, user } from './schema'
+import { board, boardColumn, invitation, member, organization, session, task } from './schema'
 
 type UpdateBoard = Pick<Board, 'id'> & Partial<Omit<Board, 'id' | 'isDeleted'>>
 type UpdateBoardColumn = Pick<BoardColumn, 'id'> & Partial<Omit<BoardColumn, 'id'>>
@@ -127,7 +127,7 @@ export const boardQueries = {
             or(eq(dbUserId, userId), eq(organizationId, activeOrgId)),
             eq(isDeleted, onlyDeleted),
           ),
-        orderBy: ({ updatedAt }, { desc }) => desc(updatedAt),
+        orderBy: (_, { desc }) => desc(board.updatedAt),
       })
     }
     catch (error) {
@@ -783,9 +783,16 @@ export const organizationQueries = {
     try {
       // Get all organizations the user is a member of
       const memberships = await db.query.member.findMany({
+        columns: {
+          updatedAt: false,
+        },
         where: (m, { eq }) => eq(m.userId, userId),
         with: {
-          organization: true,
+          organization: {
+            columns: {
+              updatedAt: false,
+            },
+          },
         },
         orderBy: (m, { desc }) => desc(m.createdAt),
       })

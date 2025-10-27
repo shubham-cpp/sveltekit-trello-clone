@@ -83,3 +83,16 @@ export const moveTaskColumnSchema = z.object({
   })),
 })
 export type MoveTaskColumnSchema = z.infer<typeof moveTaskColumnSchema>
+
+export const updatePasswordSchema = z.object({
+  _currentPassword: z.string().min(1, 'Current password is required'),
+  _newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+  _confirmNewPassword: z.string().min(8, 'New password must be at least 8 characters'),
+}).refine(data => data._newPassword === data._confirmNewPassword, {
+  message: 'Passwords don\'t match',
+  path: ['_confirmNewPassword'],
+})
+
+export const updateProfileSchema = z.object({
+  name: z.string().trim().min(2, 'Name must be at least 2 characters').max(128),
+})

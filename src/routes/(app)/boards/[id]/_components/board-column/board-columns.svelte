@@ -177,7 +177,7 @@
 
 {#snippet renderTask(t: BoardTaskWithUser)}
   <Card.Root class='
-    cursor-move transition-shadow
+    cursor-move py-2 transition-shadow
     hover:shadow-md
   '>
     <Card.Content class='

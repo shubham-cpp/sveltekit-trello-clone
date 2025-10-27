@@ -1,6 +1,11 @@
 import { command, form, getRequestEvent, query } from '$app/server'
+import { auth } from '$lib/server/auth'
+import { db } from '$lib/server/db'
 import { organizationQueries } from '$lib/server/db/queries'
+import { user as userTable } from '$lib/server/db/schema'
+import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
 import { fail, redirect } from '@sveltejs/kit'
+import { eq } from 'drizzle-orm'
 import { z } from 'zod/v4'
 
 // Schema for updating organization details
@@ -89,7 +94,69 @@ export const updateOrganization = form(
   },
 )
 
-// Command to set active organization
+export const updateProfile = form(updateProfileSchema, async ({ name }) => {
+  const { locals } = getRequestEvent()
+  const userId = locals.user?.id
+
+  if (!userId) {
+    return redirect(307, '/login')
+  }
+
+  try {
+    const [updated] = await db
+      .update(userTable)
+      .set({ name })
+      .where(eq(userTable.id, userId))
+      .returning({ id: userTable.id, name: userTable.name, email: userTable.email })
+
+    if (!updated) {
+      return fail(400, { error: 'Failed to update profile' })
+    }
+
+    return {
+      status: 200,
+      message: 'Profile updated successfully',
+      user: updated,
+    }
+  }
+  catch (error) {
+    console.error('Error updating profile:', error)
+    return fail(500, { error: 'Failed to update profile' })
+  }
+})
+
+export const updatePassword = form(
+  updatePasswordSchema,
+  async ({ _currentPassword: currentPassword, _newPassword: newPassword }) => {
+    const { locals, request } = getRequestEvent()
+    const userId = locals.user?.id
+
+    if (!userId) {
+      return redirect(307, '/login')
+    }
+
+    try {
+      await auth.api.changePassword({
+        body: {
+          currentPassword,
+          newPassword,
+          revokeOtherSessions: true,
+        },
+        headers: request.headers,
+      })
+
+      return {
+        status: 200,
+        message: 'Password updated successfully',
+      }
+    }
+    catch (error) {
+      console.error('Error updating password:', error)
+      return fail(400, { error: 'Failed to update password. Check your current password.' })
+    }
+  },
+)
+
 export const setActiveOrganization = command(
   setActiveOrganizationSchema,
   async ({ organizationId }) => {

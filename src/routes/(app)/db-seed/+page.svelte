@@ -1,8 +1,7 @@
 <script lang='ts'>
-  import type { PageProps } from "./$types";
+  import type { PageProps } from './$types'
 
-
-  const { data }:PageProps = $props()
+  const { data }: PageProps = $props()
 </script>
 <h1>SEED DATABASE</h1>
 
