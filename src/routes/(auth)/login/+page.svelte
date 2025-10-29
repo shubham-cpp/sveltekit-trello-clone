@@ -1,58 +1,74 @@
 <script lang='ts'>
-  import type { LoginFormSchema } from '$lib/zod-schemas'
   import { goto } from '$app/navigation'
-  import { authClient } from '$lib/auth-client.js'
-  import * as Form from '$lib/components/ui/form/index.js'
-  import { Input } from '$lib/components/ui/input/index.js'
+  import { Button } from '$lib/components/ui/button'
+  import * as Field from '$lib/components/ui/field'
+  import { Input } from '$lib/components/ui/input'
+  import PasswordInput from '$lib/components/ui/password-input.svelte'
   import { loginSchema } from '$lib/zod-schemas'
-  import { get } from 'svelte/store'
-  import { superForm } from 'sveltekit-superforms'
-  import { zod4Client as zodClient } from 'sveltekit-superforms/adapters'
+  import { toast } from 'svelte-sonner'
+  import { signIn } from './data.remote'
 
-  const { data } = $props()
+  const formData = signIn.fields
 
-  const form = superForm<LoginFormSchema>(data.form, {
-    validators: zodClient(loginSchema),
-    async onResult({ result }) {
-      if (result.type !== 'success')
-        return
-      try {
-        // eslint-disable-next-line no-use-before-define
-        const { email, password } = get(formData)
-
-        const { error } = await authClient.signIn.email({ email, password, rememberMe: true })
-        if (error?.message)
-          throw new Error(error?.message)
-
-        await goto('/dashboard')
-      }
-      catch (err) {
-        console.error('Sign up failed', err)
-      }
-    },
+  $effect(() => {
+    if ((signIn.result as any)?.status === 200) {
+      toast.success('Logged in successfully.')
+      goto('/dashboard')
+    }
   })
-
-  const { form: formData, enhance } = form
 </script>
 
-<form method='POST' use:enhance>
-  <Form.Field {form} name='email'>
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Email</Form.Label>
-        <Input {...props} type='email' bind:value={$formData.email} />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
-  <Form.Field {form} name='password'>
-    <Form.Control>
-      {#snippet children({ props })}
-        <Form.Label>Password</Form.Label>
-        <Input {...props} type='password' bind:value={$formData.password} />
-      {/snippet}
-    </Form.Control>
-    <Form.FieldErrors />
-  </Form.Field>
-  <Form.Button class='w-full'>Submit</Form.Button>
+<form
+  {...signIn.preflight(loginSchema)}
+  oninput={() => signIn.validate()}
+  class='space-y-4'
+>
+  <Field.Field aria-invalid={!!formData.email.issues()?.length}>
+    <Field.Label
+      aria-invalid={!!formData.email.issues()?.length}
+      for='email'
+    >
+      Email
+    </Field.Label>
+    <Input
+      {...formData.email.as('email')}
+      id='email'
+      placeholder='you@example.com'
+      aria-invalid={!!formData.email.issues()?.length}
+    />
+    <Field.Error
+      class='
+        hidden
+        aria-invalid:block
+      '
+      aria-invalid={!!formData.email.issues()?.length}
+    >
+      {formData.email.issues()?.map(i => i.message)?.join(',')}
+    </Field.Error>
+  </Field.Field>
+
+  <Field.Field aria-invalid={!!formData._password.issues()?.length}>
+    <Field.Label
+      aria-invalid={!!formData._password.issues()?.length}
+      for='password'
+    >
+      Password
+    </Field.Label>
+    <PasswordInput
+      {...formData._password.as('password')}
+      id='password'
+      aria-invalid={!!formData._password.issues()?.length}
+    />
+    <Field.Error
+      class='
+        hidden
+        aria-invalid:block
+      '
+      aria-invalid={!!formData._password.issues()?.length}
+    >
+      {formData._password.issues()?.map(i => i.message)?.join(',')}
+    </Field.Error>
+  </Field.Field>
+
+  <Button type='submit' class='w-full'>Submit</Button>
 </form>

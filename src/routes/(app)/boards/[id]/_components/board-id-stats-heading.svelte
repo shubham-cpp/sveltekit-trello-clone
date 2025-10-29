@@ -1,28 +1,9 @@
 <script lang='ts'>
   import type { BoardWithColumnAndTask } from '$lib/server/db/types'
 
-  import type { AddNewTaskSchema } from '$lib/zod-schemas'
-  import type { SuperValidated } from 'sveltekit-superforms'
-
   import AddNewTaskForm from './add-new-task-form.svelte'
 
-  export type INewTaskForm = SuperValidated<{
-    title: string
-    due_date: Date
-    assignee: string
-    description?: string | undefined
-    priority?: 'low' | 'medium' | 'high' | undefined
-    sort_order?: number | undefined
-  }, any, {
-    title: string
-    due_date: Date
-    assignee: string
-    description?: string | undefined
-    priority?: 'low' | 'medium' | 'high' | undefined
-    sort_order?: number | undefined
-  }>
-
-  interface BoardHeadingProps { board: BoardWithColumnAndTask, form: SuperValidated<AddNewTaskSchema> }
+  interface BoardHeadingProps { board: BoardWithColumnAndTask }
 
   const { board }: BoardHeadingProps = $props()
 

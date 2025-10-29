@@ -10,6 +10,7 @@
     class: className,
     value = $bindable<string>(),
     type,
+    placeholder = '*********',
     ...rest
   }: PasswordInputProps = $props()
 
@@ -23,6 +24,7 @@
 <IG.Root class={className}>
   <IG.Input
     bind:value={value}
+    {placeholder}
     {...rest}
     type={showPassword ? 'text' : type as any}
   />

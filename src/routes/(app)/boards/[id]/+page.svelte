@@ -14,7 +14,7 @@
 
 <div>
   <!-- STATS -->
-  <BoardIdStatHeading board={data.board} form={data.form} />
+  <BoardIdStatHeading board={data.board} />
   <BoardColumns board={data.board} />
   <!-- <WorkingDndActionExample /> -->
 </div>

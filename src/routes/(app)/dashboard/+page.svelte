@@ -20,7 +20,7 @@
     updated_at_max: z.string().default(''),
     updated_at_exact: z.string().default(''),
     created_by: z.string().default(''),
-    sort_by: z.enum(['updatedAt', 'createdAt', 'title']).default('updatedAt'),
+    sort_by: z.enum(['updatedAt', 'createdAt', 'title', 'ownerName']).default('updatedAt'),
     sort_dir: z.enum(['asc', 'desc']).default('desc'),
     view: z.enum(['grid', 'list']).default('grid'),
   })
@@ -89,7 +89,12 @@
     const dir = params.sort_dir === 'asc' ? 1 : -1
     boards.sort((a: any, b: any) => {
       if (sortBy === 'title') {
-        return a.title.localeCompare(b.title) * dir
+        return (a.title ?? '').localeCompare(b.title ?? '') * dir
+      }
+      if (sortBy === 'ownerName') {
+        const an = a?.owner?.name ?? ''
+        const bn = b?.owner?.name ?? ''
+        return an.localeCompare(bn) * dir
       }
       const av = new Date(a[sortBy]).getTime()
       const bv = new Date(b[sortBy]).getTime()

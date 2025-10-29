@@ -1,9 +1,7 @@
 import type { Actions, PageServerLoad } from './$types'
 import { boardQueries } from '$lib/server/db/queries'
-import { addNewTaskSchema, editBoardSchema } from '$lib/zod-schemas'
-import { error, redirect } from '@sveltejs/kit'
-import { fail, superValidate } from 'sveltekit-superforms'
-import { zod4 as zod } from 'sveltekit-superforms/adapters'
+import { editBoardSchema } from '$lib/zod-schemas'
+import { error, fail, redirect } from '@sveltejs/kit'
 
 export const load: PageServerLoad = async (events) => {
   const { id: boardId } = events.params
@@ -19,7 +17,7 @@ export const load: PageServerLoad = async (events) => {
   if (!board)
     error(404, { message: 'No board found for this ID' })
 
-  return { board, form: await superValidate(zod(addNewTaskSchema), { id: 'add-new-task-form' }) }
+  return { board }
 }
 
 export const actions: Actions = {
@@ -33,10 +31,10 @@ export const actions: Actions = {
     if (!userId)
       return redirect(307, '/login')
 
-    const form = await superValidate(request, zod(editBoardSchema))
+    const form = editBoardSchema.safeParse(request.formData)
 
-    if (!form.valid) {
-      return fail(400, { form })
+    if (!form.success) {
+      return fail(400, { form, error: 'Failed to update board.' })
     }
 
     const updated = await boardQueries.updateById(userId, {
@@ -46,7 +44,7 @@ export const actions: Actions = {
     })
 
     if (!updated) {
-      return fail(500, { form, error: 'Failed to update board' })
+      return fail(500, { form, error: 'Failed to update board.' })
     }
 
     return { form }
@@ -70,42 +68,4 @@ export const actions: Actions = {
 
     redirect(303, '/dashboard')
   },
-  // addNewTask: async (event) => {
-  //   // addNewTask action invoked
-  //   const { params, locals, request } = event
-  //   const userId = locals.user?.id
-  //   const boardId = params.id
-
-  //   if (!boardId)
-  //     return fail(401, { error: 'Board id is required' })
-  //   if (!userId)
-  //     return redirect(307, '/login')
-
-  //   const form = await superValidate(request, zod(addNewTaskSchema), { id: 'add-new-task-form' })
-
-  //   if (!form.valid) {
-  //     return fail(401, { form })
-  //   }
-
-  //   try {
-  //     const { title, priority = 'medium', description = null, due_date, assignee } = form.data
-  //     const newTask = await taskQueries.create(userId, boardId, form.data.targetColumnId, {
-  //       title,
-  //       description,
-  //       due_date,
-  //       assignee,
-  //       priority,
-  //       sort_order: 0,
-  //     })
-
-  //     if (!newTask) {
-  //       return fail(401, { error: 'Failed to create new task.' })
-  //     }
-
-  //     return { form }
-  //   }
-  //   catch {
-  //     return fail(500, { form })
-  //   }
-  // },
 }
