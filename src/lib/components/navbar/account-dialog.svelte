@@ -1,8 +1,8 @@
 <script lang='ts'>
+  import FormInput from '$lib/components/forms/form-input.svelte'
   import { Button } from '$lib/components/ui/button'
   import * as Dialog from '$lib/components/ui/dialog'
   import { Input } from '$lib/components/ui/input'
-  import PasswordInput from '$lib/components/ui/password-input.svelte'
   import * as Tabs from '$lib/components/ui/tabs'
   import { cn } from '$lib/utils'
   import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
@@ -76,17 +76,34 @@
           {...(updatePassword.preflight(updatePasswordSchema))}
         >
           <div class='grid gap-2'>
-            <label for='currentPassword' class='text-sm font-medium'>Current password</label>
-            <!-- <Input id='currentPassword' name='currentPassword' type='password' bind:value={currentPassword} autocomplete='current-password' /> -->
-            <PasswordInput {...updatePassword.fields._currentPassword.as('password')} id='currentPassword' autocomplete='current-password' />
+            <FormInput
+              field={updatePassword.fields._currentPassword}
+              id='currentPassword'
+              label='Current password'
+              type='password'
+              as='password'
+              autocomplete='current-password'
+            />
           </div>
           <div class='grid gap-2'>
-            <label for='newPassword' class='text-sm font-medium'>New password</label>
-            <PasswordInput {...updatePassword.fields._newPassword.as('password')} id='newPassword' autocomplete='new-password' />
+            <FormInput
+              field={updatePassword.fields._newPassword}
+              id='newPassword'
+              label='New password'
+              type='password'
+              as='password'
+              autocomplete='new-password'
+            />
           </div>
           <div class='grid gap-2'>
-            <label for='confirmPassword' class='text-sm font-medium'>Confirm new password</label>
-            <PasswordInput {...updatePassword.fields._confirmNewPassword.as('password')} id='confirmPassword' autocomplete='new-password' />
+            <FormInput
+              field={updatePassword.fields._confirmNewPassword}
+              id='confirmPassword'
+              label='Confirm new password'
+              type='password'
+              as='password'
+              autocomplete='new-password'
+            />
           </div>
           <div class='flex items-center justify-end gap-2'>
             <Dialog.Close type='button' class={cn(`

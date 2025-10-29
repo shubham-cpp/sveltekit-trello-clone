@@ -1,14 +1,14 @@
 <script lang='ts'>
   import type { ButtonProps } from '$lib/components/ui/button/button.svelte'
 
+  import FormInput from '$lib/components/forms/form-input.svelte'
+  import FormSelect from '$lib/components/forms/form-select.svelte'
   import { Button, buttonVariants } from '$lib/components/ui/button'
   import { Calendar } from '$lib/components/ui/calendar'
   import * as Command from '$lib/components/ui/command/index.js'
   import * as Dialog from '$lib/components/ui/dialog'
   import * as Field from '$lib/components/ui/field'
-  import Input from '$lib/components/ui/input/input.svelte'
   import * as Popover from '$lib/components/ui/popover'
-  import * as Select from '$lib/components/ui/select'
   import { Textarea } from '$lib/components/ui/textarea'
   import { cn, df } from '$lib/utils'
   import { addNewTaskSchema, PRIORITY_VALUES } from '$lib/zod-schemas'
@@ -130,32 +130,15 @@
       oninput={() => createTask.validate()}
       class='space-y-4'
     >
-      <Field.Field aria-invalid={!!formData.title.issues()?.length}>
-        <Field.Label
-          aria-invalid={!!formData.title.issues()?.length}
-          for='title'>Title</Field.Label
-        >
-        <Input
-          {...formData.title.as('text')}
-          id='title'
-          class='placeholder:text-foreground/50'
-          placeholder='New Task name'
-          aria-invalid={!!formData.title.issues()?.length}
-        />
-
-        <Field.Error
-          class='
-            hidden
-            aria-invalid:block
-          '
-          aria-invalid={!!formData.title.issues()?.length}
-        >
-          {formData.title
-            .issues()
-            ?.map(i => i.message)
-            ?.join(',')}
-        </Field.Error>
-      </Field.Field>
+      <FormInput
+        field={formData.title}
+        id='title'
+        label='Title'
+        placeholder='New Task name'
+        type='text'
+        as='text'
+        class='placeholder:text-foreground/50'
+      />
       <Field.Field aria-invalid={!!formData.description.issues()?.length}>
         <Field.Label
           aria-invalid={!!formData.description.issues()?.length}
@@ -292,54 +275,14 @@
               ?.join(',')}
           </Field.Error>
         </Field.Field>
-        <Field.Field
-          aria-invalid={!!formData.priority.issues()?.length}
-        >
-          <Field.Label
-            aria-invalid={!!formData.priority.issues()?.length}
-            for='priority'>Priority</Field.Label
-          >
-          <Select.Root
-            type='single'
-            onValueChange={newV =>
-              formData.priority.set(newV as any)}
-          >
-            <Select.Trigger
-              id='department'
-              aria-invalid={!!formData.priority.issues()?.length}
-              class='capitalize'
-            >
-              {formData?.priority?.value()?.trim()
-                ? formData?.priority?.value()
-                : 'select priority'}
-            </Select.Trigger>
-            <Select.Content
-              {...formData.priority.as('select')}
-              aria-invalid={!!formData.priority.issues()?.length}
-            >
-              {#each PRIORITY_VALUES as prs (prs)}
-                <Select.Item
-                  id={prs}
-                  value={prs}
-                  label={prs}
-                  class='capitalize'
-                />
-              {/each}
-            </Select.Content>
-          </Select.Root>
-          <Field.Error
-            class='
-              hidden
-              aria-invalid:block
-            '
-            aria-invalid={!!formData.priority.issues()?.length}
-          >
-            {formData.priority
-              .issues()
-              ?.map(i => i.message)
-              ?.join(',')}
-          </Field.Error>
-        </Field.Field>
+        <FormSelect
+          field={formData.priority}
+          id='priority'
+          label='Priority'
+          placeholder='select priority'
+          items={PRIORITY_VALUES}
+          class='capitalize'
+        />
       </div>
       <Field.Field aria-invalid={!!formData.due_date.issues()?.length}>
         <Field.Label
