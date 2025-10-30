@@ -1,7 +1,7 @@
 <script lang='ts'>
-  import type { invitationQueries } from '$lib/server/db/queries'
-  import { Button } from '$lib/components/ui/button'
-  import * as Dialog from '$lib/components/ui/dialog/index.js'
+  import type { invitationQueries } from '$db/queries'
+  import { Button } from '$ui/button'
+  import * as Dialog from '$ui/dialog/index.js'
   import CheckIcon from '@lucide/svelte/icons/check'
   import XIcon from '@lucide/svelte/icons/x'
   import { toast } from 'svelte-sonner'

@@ -22,7 +22,7 @@ export const user = sqliteTable('user', {
 export const organization = sqliteTable(
   'organization',
   {
-    id: text('id').primaryKey(),
+    id: text('id').primaryKey().$defaultFn(nanoid),
     name: text('name').notNull(),
     slug: text('slug').notNull().unique(),
     logo: text('logo'),
@@ -112,7 +112,7 @@ export const verification = sqliteTable('verification', {
 export const member = sqliteTable(
   'member',
   {
-    id: text('id').primaryKey(),
+    id: text('id').primaryKey().$defaultFn(nanoid),
     organizationId: text('organization_id')
       .notNull()
       .references(() => organization.id, { onDelete: 'cascade' }),
@@ -140,7 +140,7 @@ export const member = sqliteTable(
 export const invitation = sqliteTable(
   'invitation',
   {
-    id: text('id').primaryKey(),
+    id: text('id').primaryKey().$defaultFn(nanoid),
     organizationId: text('organization_id')
       .notNull()
       .references(() => organization.id, { onDelete: 'cascade' }),

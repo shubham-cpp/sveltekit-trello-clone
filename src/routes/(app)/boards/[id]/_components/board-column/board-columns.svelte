@@ -1,12 +1,12 @@
 <script lang='ts'>
-  import type { BoardColumnWithTask, BoardTaskWithUser, BoardWithColumnAndTask } from '$lib/server/db/types'
+  import type { BoardColumnWithTask, BoardTaskWithUser, BoardWithColumnAndTask } from '$db/types'
   import type { UpdateTaskSortOrderSchema } from '$lib/zod-schemas'
   import type { ActionFailure } from '@sveltejs/kit'
   import type { DndEvent } from 'svelte-dnd-action'
-  import Badge from '$lib/components/ui/badge/badge.svelte'
-  import Button from '$lib/components/ui/button/button.svelte'
-  import * as Card from '$lib/components/ui/card/index.js'
   import { df } from '$lib/utils'
+  import Badge from '$ui/badge/badge.svelte'
+  import Button from '$ui/button/button.svelte'
+  import * as Card from '$ui/card'
   import CalendarIcon from '@lucide/svelte/icons/calendar'
   import EllipsisIcon from '@lucide/svelte/icons/ellipsis'
   import UserIcon from '@lucide/svelte/icons/user'
@@ -133,6 +133,16 @@
           </div>
           <!-- TODO: post-click we should present a dialog to update the task title -->
           <Button class='shrink-0' size='icon-sm' variant='outline'> <EllipsisIcon /> </Button>
+          <!-- <EditColumnTitle
+            columnId={col.id}
+            initialTitle={col.title}
+            onSuccess={(newTitle) => {
+              const idx = boardColumns.findIndex(c => c.id === col.id)
+              if (idx >= 0) {
+                boardColumns[idx].title = newTitle
+              }
+            }}
+          /> -->
         </div>
       </div>
       <!-- Task List -->

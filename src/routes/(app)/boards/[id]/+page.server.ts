@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types'
-import { boardQueries } from '$lib/server/db/queries'
+import { boardQueries } from '$db/queries'
 import { editBoardSchema } from '$lib/zod-schemas'
 import { error, fail, redirect } from '@sveltejs/kit'
 
@@ -35,6 +35,20 @@ export const actions: Actions = {
 
     if (!form.success) {
       return fail(400, { form, error: 'Failed to update board.' })
+    }
+
+    const current = await boardQueries.getWithColumnsAndTasksById(userId, boardId)
+    if (!current) {
+      return fail(404, { form, error: 'Board not found.' })
+    }
+    const currentTitle = current.title?.trim() ?? ''
+    const currentColor = current.color ?? null
+
+    const newTitle = form.data.title.trim()
+    const newColor = form.data.color
+
+    if (currentTitle === newTitle && currentColor === newColor) {
+      return fail(400, { form, error: 'No changes to update.' })
     }
 
     const updated = await boardQueries.updateById(userId, {

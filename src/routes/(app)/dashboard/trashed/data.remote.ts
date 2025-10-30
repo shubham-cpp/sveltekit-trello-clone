@@ -1,5 +1,5 @@
 import { form, getRequestEvent } from '$app/server'
-import { boardQueries } from '$lib/server/db/queries'
+import { boardQueries } from '$db/queries'
 import { fail, redirect } from '@sveltejs/kit'
 import { z } from 'zod/v4'
 

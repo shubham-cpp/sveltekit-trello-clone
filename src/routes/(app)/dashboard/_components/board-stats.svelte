@@ -1,6 +1,6 @@
 <script lang='ts'>
-  import type { Board } from '$lib/server/db/types'
-  import * as Card from '$lib/components/ui/card/index.js'
+  import type { Board } from '$db/types'
+  import * as Card from '$ui/card/index.js'
   import ChartNoAxesCombinesIcon from '@lucide/svelte/icons/chart-no-axes-combined'
   import TrelloIcon from '@lucide/svelte/icons/trello'
   import UserPlusIcon from '@lucide/svelte/icons/user-plus'

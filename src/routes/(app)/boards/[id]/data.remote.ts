@@ -1,6 +1,6 @@
 import { command, form, getRequestEvent } from '$app/server'
-import { organizationQueries, taskQueries } from '$lib/server/db/queries'
-import { addNewTaskSchema, moveTaskColumnSchema, updateTaskSortOrderSchema } from '$lib/zod-schemas'
+import { boardColumnQueries, organizationQueries, taskQueries } from '$db/queries'
+import { addNewTaskSchema, moveTaskColumnSchema, updateBoardColumnTitleSchema, updateTaskSortOrderSchema } from '$lib/zod-schemas'
 import { fail, redirect } from '@sveltejs/kit'
 import { z } from 'zod/v4'
 
@@ -69,6 +69,49 @@ export const moveTaskColumn = command(moveTaskColumnSchema, async (data) => {
 
   return taskQueries.moveToColumn(userId, boardId, data.newColumnId, data.taskId, data.newSortOrder)
 })
+
+export const updateColumnTitle = form(
+  updateBoardColumnTitleSchema,
+  async ({ columnId, title }, invalid) => {
+    const { locals, params } = getRequestEvent()
+
+    const userId = locals.user?.id
+    const boardId = params.id
+
+    if (!boardId)
+      return fail(401, { error: 'Board id is required' })
+    if (!userId)
+      return redirect(307, '/login')
+
+    // Fetch current column to avoid unnecessary writes
+    const current = await boardColumnQueries.getById(userId, columnId)
+    if (!current) {
+      fail(404, { error: 'Column not found.' })
+      return
+    }
+
+    const currentTitle = current.title?.trim() ?? ''
+    const newTitle = title.trim()
+
+    if (currentTitle === newTitle) {
+      invalid(invalid.title('No change detected'))
+      return
+    }
+
+    const updated = await boardColumnQueries.updateById(userId, {
+      id: columnId,
+      title: newTitle,
+    })
+
+    if (!updated) {
+      fail(500, { error: 'Failed to update column.' })
+    }
+
+    // json({ status: 201, message: 'Column updated successfully.' })
+    return { success: true }
+    // redirect(303, `/boards/${boardId}`)
+  },
+)
 
 // Schema for the search query
 const searchMembersSchema = z.object({

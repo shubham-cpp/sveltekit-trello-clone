@@ -1,6 +1,6 @@
 <script lang='ts'>
   import { page } from '$app/state'
-  import { buttonVariants } from '$lib/components/ui/button'
+  import { buttonVariants } from '$ui/button'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
   import ArrowBigLeftDash from '@lucide/svelte/icons/arrow-big-left-dash'
   import TrashIcon from '@lucide/svelte/icons/trash'

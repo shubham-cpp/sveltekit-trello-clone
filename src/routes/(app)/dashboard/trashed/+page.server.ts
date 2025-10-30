@@ -1,5 +1,5 @@
 import type { Actions, PageServerLoad } from './$types'
-import { boardQueries } from '$lib/server/db/queries'
+import { boardQueries } from '$db/queries'
 import { redirect } from '@sveltejs/kit'
 
 export const load: PageServerLoad = async (event) => {

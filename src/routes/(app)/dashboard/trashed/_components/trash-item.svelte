@@ -1,7 +1,7 @@
 <script lang='ts'>
-  import type { Board } from '$lib/server/db/types'
-  import * as AlertDialog from '$lib/components/ui/alert-dialog/index.js'
-  import { Button, buttonVariants } from '$lib/components/ui/button'
+  import type { Board } from '$db/types'
+  import * as AlertDialog from '$ui/alert-dialog/index.js'
+  import { Button, buttonVariants } from '$ui/button'
   import { df } from '$lib/utils'
   import RotateCcwIcon from '@lucide/svelte/icons/rotate-ccw'
   import TrashIcon from '@lucide/svelte/icons/trash'

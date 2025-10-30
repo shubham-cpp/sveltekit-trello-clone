@@ -1,7 +1,7 @@
 <script lang='ts'>
-  import Badge from '$lib/components/ui/badge/badge.svelte'
-  import Button, { buttonVariants } from '$lib/components/ui/button/button.svelte'
-  import * as Dialog from '$lib/components/ui/dialog/index.js'
+  import Badge from '$ui/badge/badge.svelte'
+  import Button, { buttonVariants } from '$ui/button/button.svelte'
+  import * as Dialog from '$ui/dialog/index.js'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
   import { cn } from '$lib/utils'
   import FunnelIcon from '@lucide/svelte/icons/funnel'

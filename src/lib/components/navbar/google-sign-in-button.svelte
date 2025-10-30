@@ -1,6 +1,6 @@
 <script lang='ts'>
   import { authClient } from '$lib/auth-client'
-  import Button from '$lib/components/ui/button/button.svelte'
+  import Button from '$ui/button/button.svelte'
 
   const handleSignIn = async () => {
     await authClient.signIn.social({

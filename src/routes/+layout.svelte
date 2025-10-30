@@ -1,6 +1,6 @@
 <script lang='ts'>
   import favicon from '$lib/assets/favicon.svg'
-  import { Toaster } from '$lib/components/ui/sonner'
+  import { Toaster } from '$ui/sonner'
   import { ModeWatcher } from 'mode-watcher'
   import '../app.css'
 

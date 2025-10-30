@@ -1,6 +1,6 @@
 <script lang='ts'>
   import { Button, buttonVariants } from '$lib/components//ui/button'
-  import * as AlertDialog from '$lib/components/ui/alert-dialog'
+  import * as AlertDialog from '$ui/alert-dialog'
 </script>
 
 <section class='mt-6 border-t pt-4'>

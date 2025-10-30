@@ -1,9 +1,9 @@
 <script lang='ts'>
   import { authClient } from '$lib/auth-client'
-  import { Avatar, AvatarFallback, AvatarImage } from '$lib/components/ui/avatar'
-  import { buttonVariants } from '$lib/components/ui/button/button.svelte'
-  import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js'
-  import Skeleton from '$lib/components/ui/skeleton/skeleton.svelte'
+  import { Avatar, AvatarFallback, AvatarImage } from '$ui/avatar'
+  import { buttonVariants } from '$ui/button/button.svelte'
+  import * as DropdownMenu from '$ui/dropdown-menu/index.js'
+  import Skeleton from '$ui/skeleton/skeleton.svelte'
   import { cn, getPrefix } from '$lib/utils'
   import UserIcon from '@lucide/svelte/icons/user'
   import AccountDialog from './account-dialog.svelte'

@@ -1,8 +1,8 @@
 <script lang='ts' generics="T">
   import type { RemoteFormField } from '@sveltejs/kit'
   import type { ComponentProps, Snippet } from 'svelte'
-  import * as Field from '$lib/components/ui/field'
-  import * as IG from '$lib/components/ui/input-group'
+  import * as Field from '$ui/field'
+  import * as IG from '$ui/input-group'
   import Eye from '@lucide/svelte/icons/eye'
   import EyeOff from '@lucide/svelte/icons/eye-off'
 

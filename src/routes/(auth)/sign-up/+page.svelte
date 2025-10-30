@@ -1,7 +1,7 @@
 <script lang='ts'>
   import { goto } from '$app/navigation'
   import FormInput from '$lib/components/forms/form-input.svelte'
-  import { Button } from '$lib/components/ui/button'
+  import { Button } from '$ui/button'
   import { signupSchema } from '$lib/zod-schemas'
   import { toast } from 'svelte-sonner'
   import { signUp } from './data.remote'

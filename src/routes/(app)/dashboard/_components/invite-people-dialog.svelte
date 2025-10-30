@@ -1,8 +1,8 @@
 <script lang='ts'>
   import type { User } from 'better-auth'
-  import { Button, buttonVariants } from '$lib/components/ui/button'
-  import * as Dialog from '$lib/components/ui/dialog/index.js'
-  import { Input } from '$lib/components/ui/input'
+  import { Button, buttonVariants } from '$ui/button'
+  import * as Dialog from '$ui/dialog/index.js'
+  import { Input } from '$ui/input'
   import { cn } from '$lib/utils'
   import PlusIcon from '@lucide/svelte/icons/plus'
   import { useDebounce } from 'runed'

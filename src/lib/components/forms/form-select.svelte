@@ -1,8 +1,8 @@
 <script lang='ts'>
   import type { RemoteFormField } from '@sveltejs/kit'
   import type { ComponentProps } from 'svelte'
-  import * as Field from '$lib/components/ui/field'
-  import * as Select from '$lib/components/ui/select'
+  import * as Field from '$ui/field'
+  import * as Select from '$ui/select'
 
   type Item = string | { value: string, label?: string }
 

@@ -2,7 +2,7 @@
   import { page } from '$app/state'
   import GoogleSignInButton from '$lib/components/navbar/google-sign-in-button.svelte'
   import Logo from '$lib/components/navbar/logo.svelte'
-  import { buttonVariants } from '$lib/components/ui/button'
+  import { buttonVariants } from '$ui/button'
   import { cn } from '$lib/utils'
 
   const isLoginRoute = $derived(page.url.pathname === '/login')

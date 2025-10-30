@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import type { BoardWithColumnAndTask } from '$lib/server/db/types'
+  import type { BoardWithColumnAndTask } from '$db/types'
 
   import AddNewTaskForm from './add-new-task-form.svelte'
 

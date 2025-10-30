@@ -1,6 +1,6 @@
+import * as schema from '$db/schema'
 import { auth } from '$lib/server/auth'
 import { db } from '$lib/server/db'
-import * as schema from '$lib/server/db/schema'
 import { COLOR_VALUES, PRIORITY_VALUES } from '$lib/zod-schemas'
 import { faker } from '@faker-js/faker'
 import { nanoid } from 'nanoid'

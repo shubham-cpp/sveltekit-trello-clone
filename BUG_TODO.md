@@ -19,6 +19,6 @@ At the current moment, even though I've accepted the invite we still see the "Ac
 
 # 7. add functionality to update the column name
 
-# 8. when the board name is the same, disable the "save button"
+# ~~8. when the board name is the same, disable the "save button"~~
 - same goes for user profile update
 - when user enter same password in current password and newPassword throw an error

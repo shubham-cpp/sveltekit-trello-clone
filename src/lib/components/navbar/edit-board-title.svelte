@@ -1,9 +1,9 @@
 <script lang='ts'>
   import type { SubmitFunction } from '@sveltejs/kit'
   import { enhance } from '$app/forms'
-  import { Button, buttonVariants } from '$lib/components/ui/button'
-  import * as Dialog from '$lib/components/ui/dialog/index.js'
-  import { Input } from '$lib/components/ui/input/index.js'
+  import { Button, buttonVariants } from '$ui/button'
+  import * as Dialog from '$ui/dialog/index.js'
+  import { Input } from '$ui/input/index.js'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
   import { cn } from '$lib/utils'
   import { COLOR_VALUES } from '$lib/zod-schemas'
@@ -15,10 +15,9 @@
   let color = $state(boardDetails.color ?? COLOR_VALUES[0])
   let dialogOpen = $state(false)
 
-  // keep local fields in sync when store changes
   $effect(() => {
     title = boardDetails.title ?? ''
-    color = (boardDetails as any).color ?? COLOR_VALUES[0]
+    color = boardDetails.color ?? COLOR_VALUES[0]
   })
 
   $effect(() => {
@@ -26,6 +25,11 @@
       tick().then(() => document.getElementById('title')?.focus())
     }
   })
+
+  const isBoardNotUpdated = $derived(
+    title.trim() === (boardDetails.title ?? '').trim()
+      && color === ((boardDetails as any).color ?? COLOR_VALUES[0]),
+  )
 
   const handleEnhance: SubmitFunction = () => {
     return async ({ update, result }) => {
@@ -94,7 +98,7 @@
         >
           Cancel
         </Dialog.Close>
-        <Button type='submit'>Save</Button>
+        <Button type='submit' disabled={isBoardNotUpdated}>Save</Button>
       </div>
     </form>
 

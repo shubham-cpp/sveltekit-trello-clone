@@ -1,8 +1,8 @@
 <script lang='ts'>
-  import type { Board } from '$lib/server/db/types'
+  import type { Board } from '$db/types'
   import type { ViewMode } from '$lib/utils'
-  import Badge from '$lib/components/ui/badge/badge.svelte'
-  import * as Card from '$lib/components/ui/card/index.js'
+  import Badge from '$ui/badge/badge.svelte'
+  import * as Card from '$ui/card/index.js'
   import { cn } from '$lib/utils'
   import { DateFormatter } from '@internationalized/date'
   import PlusIcon from '@lucide/svelte/icons/plus'

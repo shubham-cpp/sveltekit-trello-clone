@@ -88,6 +88,12 @@ export const moveTaskColumnSchema = z.object({
 })
 export type MoveTaskColumnSchema = z.infer<typeof moveTaskColumnSchema>
 
+export const updateBoardColumnTitleSchema = z.object({
+  columnId: z.string().min(6, 'Invalid column id passed.').max(56),
+  title: z.string().trim().min(3, 'Title should at least have 3 characters.').max(96),
+})
+export type UpdateBoardColumnTitleSchema = z.infer<typeof updateBoardColumnTitleSchema>
+
 export const updatePasswordSchema = z.object({
   _currentPassword: z.string().min(1, 'Current password is required'),
   _newPassword: z.string().min(8, 'New password must be at least 8 characters'),

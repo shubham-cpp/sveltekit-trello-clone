@@ -1,9 +1,9 @@
 <script lang='ts'>
   import FormInput from '$lib/components/forms/form-input.svelte'
-  import { Button } from '$lib/components/ui/button'
-  import * as Dialog from '$lib/components/ui/dialog'
-  import { Input } from '$lib/components/ui/input'
-  import * as Tabs from '$lib/components/ui/tabs'
+  import { Button } from '$ui/button'
+  import * as Dialog from '$ui/dialog'
+  import { Input } from '$ui/input'
+  import * as Tabs from '$ui/tabs'
   import { cn } from '$lib/utils'
   import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
   import { onMount } from 'svelte'

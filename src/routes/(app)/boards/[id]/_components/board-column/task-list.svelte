@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import type { BoardColumnWithTask } from '$lib/server/db/types'
+  import type { BoardColumnWithTask } from '$db/types'
 
   interface TaskListProps {
     tasks: BoardColumnWithTask['tasks']

@@ -1,5 +1,5 @@
 import { command, getRequestEvent, query } from '$app/server'
-import { invitationQueries, organizationQueries } from '$lib/server/db/queries'
+import { invitationQueries, organizationQueries } from '$db/queries'
 import { fail, redirect } from '@sveltejs/kit'
 import { z } from 'zod/v4'
 

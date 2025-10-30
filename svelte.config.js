@@ -1,3 +1,4 @@
+import path from 'node:path'
 import adapter from '@sveltejs/adapter-vercel'
 import { vitePreprocess } from '@sveltejs/vite-plugin-svelte'
 
@@ -10,6 +11,10 @@ const config = {
     adapter: adapter(),
     experimental: {
       remoteFunctions: true,
+    },
+    alias: {
+      $ui: path.resolve('src/lib/components/ui'),
+      $db: path.resolve('src/lib/server/db'),
     },
   },
   compilerOptions: {

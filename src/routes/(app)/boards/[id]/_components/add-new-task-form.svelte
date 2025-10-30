@@ -1,15 +1,15 @@
 <script lang='ts'>
-  import type { ButtonProps } from '$lib/components/ui/button/button.svelte'
+  import type { ButtonProps } from '$ui/button/button.svelte'
 
   import FormInput from '$lib/components/forms/form-input.svelte'
   import FormSelect from '$lib/components/forms/form-select.svelte'
-  import { Button, buttonVariants } from '$lib/components/ui/button'
-  import { Calendar } from '$lib/components/ui/calendar'
-  import * as Command from '$lib/components/ui/command/index.js'
-  import * as Dialog from '$lib/components/ui/dialog'
-  import * as Field from '$lib/components/ui/field'
-  import * as Popover from '$lib/components/ui/popover'
-  import { Textarea } from '$lib/components/ui/textarea'
+  import { Button, buttonVariants } from '$ui/button'
+  import { Calendar } from '$ui/calendar'
+  import * as Command from '$ui/command/index.js'
+  import * as Dialog from '$ui/dialog'
+  import * as Field from '$ui/field'
+  import * as Popover from '$ui/popover'
+  import { Textarea } from '$ui/textarea'
   import { cn, df } from '$lib/utils'
   import { addNewTaskSchema, PRIORITY_VALUES } from '$lib/zod-schemas'
 
