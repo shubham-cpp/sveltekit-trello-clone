@@ -106,3 +106,17 @@ export const updatePasswordSchema = z.object({
 export const updateProfileSchema = z.object({
   name: z.string().trim().min(2, 'Name must be at least 2 characters').max(128),
 })
+
+export const boardSearchSchema = z.object({
+  q: z.string().default(''),
+  created_at_min: z.string().default(''),
+  created_at_max: z.string().default(''),
+  created_at_exact: z.string().default(''),
+  updated_at_min: z.string().default(''),
+  updated_at_max: z.string().default(''),
+  updated_at_exact: z.string().default(''),
+  created_by: z.string().default(''),
+  sort_by: z.enum(['updatedAt', 'createdAt', 'title', 'ownerName']).default('updatedAt'),
+  sort_dir: z.enum(['asc', 'desc']).default('desc'),
+  view: z.enum(['grid', 'list']).default('grid'),
+})

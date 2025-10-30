@@ -2,28 +2,14 @@
   import type { ViewMode } from '$lib/utils'
   import type { PageProps } from './$types'
   import { enhance } from '$app/forms'
+  import { boardSearchSchema } from '$lib/zod-schemas'
   import { useSearchParams } from 'runed/kit'
-  import { z } from 'zod/v4'
   import BoardFilters from './_components/board-filters.svelte'
   import BoardList from './_components/board-list.svelte'
   import BoardStats from './_components/board-stats.svelte'
   import InvitePeopleDialog from './_components/invite-people-dialog.svelte'
 
   const { data }: PageProps = $props()
-
-  const boardSearchSchema = z.object({
-    q: z.string().default(''),
-    created_at_min: z.string().default(''),
-    created_at_max: z.string().default(''),
-    created_at_exact: z.string().default(''),
-    updated_at_min: z.string().default(''),
-    updated_at_max: z.string().default(''),
-    updated_at_exact: z.string().default(''),
-    created_by: z.string().default(''),
-    sort_by: z.enum(['updatedAt', 'createdAt', 'title', 'ownerName']).default('updatedAt'),
-    sort_dir: z.enum(['asc', 'desc']).default('desc'),
-    view: z.enum(['grid', 'list']).default('grid'),
-  })
 
   const params = useSearchParams(boardSearchSchema, {
     debounce: 300,

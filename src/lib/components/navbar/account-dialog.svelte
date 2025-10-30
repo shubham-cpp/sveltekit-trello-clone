@@ -1,11 +1,11 @@
 <script lang='ts'>
   import FormInput from '$lib/components/forms/form-input.svelte'
+  import { cn } from '$lib/utils'
+  import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
   import { Button } from '$ui/button'
   import * as Dialog from '$ui/dialog'
   import { Input } from '$ui/input'
   import * as Tabs from '$ui/tabs'
-  import { cn } from '$lib/utils'
-  import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
   import { onMount } from 'svelte'
   import { toast } from 'svelte-sonner'
   import { updatePassword, updateProfile } from './data.remote'
