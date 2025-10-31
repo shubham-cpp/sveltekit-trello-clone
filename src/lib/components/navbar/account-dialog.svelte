@@ -1,37 +1,23 @@
 <script lang='ts'>
-  import FormInput from '$lib/components/forms/form-input.svelte'
-  import { cn } from '$lib/utils'
-  import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
-  import { Button } from '$ui/button'
   import * as Dialog from '$ui/dialog'
-  import { Input } from '$ui/input'
   import * as Tabs from '$ui/tabs'
-  import { onMount } from 'svelte'
-  import { toast } from 'svelte-sonner'
-  import { updatePassword, updateProfile } from './data.remote'
+  import UpdatePasswordForm from './update-password-form.svelte'
+  import UpdateProfileForm from './update-profile-form.svelte'
 
   interface Props {
     controller?: { open: boolean }
     userName?: string
     userEmail?: string
   }
-  const {
+  let {
     controller = $bindable<{ open: boolean }>({ open: false }),
     userName = '',
     userEmail = '',
   }: Props = $props()
 
-  const changing = $derived(!!updatePassword.pending)
-
-  $effect(() => {
-    if (updatePassword.result?.status === 200) {
-      toast.success((updatePassword.result as any)?.message || 'Password has been updated successfully.')
-    }
-  })
-  onMount(() => {
-    updateProfile.fields.name.set(userName)
-  })
-
+  function onSuccess() {
+    controller.open = false
+  }
 </script>
 
 <Dialog.Root bind:open={controller.open}>
@@ -48,74 +34,11 @@
       </Tabs.List>
 
       <Tabs.Content value='profile' class='pt-4'>
-        <!-- Use remote form for profile update -->
-        <form
-          {...updateProfile.preflight(updateProfileSchema)} class='space-y-4'>
-          <div class='grid gap-2'>
-            <label for='name' class='text-sm font-medium'>Name</label>
-            <Input {...updateProfile.fields.name.as('text')} placeholder='Your name' />
-          </div>
-          <div class='grid gap-2'>
-            <label for='email' class='text-sm font-medium'>Email</label>
-            <Input id='email' type='email' value={userEmail} disabled />
-          </div>
-          <div class='flex items-center justify-end gap-2'>
-            <Dialog.Close type='button' class={cn(`
-              rounded-md border px-3 py-2 text-sm
-            `)}>
-              Close
-            </Dialog.Close>
-            <Button type='submit'>Save</Button>
-          </div>
-        </form>
+        <UpdateProfileForm {userEmail} {userName} {onSuccess} />
       </Tabs.Content>
 
       <Tabs.Content value='password' class='pt-4'>
-        <form
-          class='space-y-4'
-          {...(updatePassword.preflight(updatePasswordSchema))}
-        >
-          <div class='grid gap-2'>
-            <FormInput
-              field={updatePassword.fields._currentPassword}
-              id='currentPassword'
-              label='Current password'
-              type='password'
-              as='password'
-              autocomplete='current-password'
-            />
-          </div>
-          <div class='grid gap-2'>
-            <FormInput
-              field={updatePassword.fields._newPassword}
-              id='newPassword'
-              label='New password'
-              type='password'
-              as='password'
-              autocomplete='new-password'
-            />
-          </div>
-          <div class='grid gap-2'>
-            <FormInput
-              field={updatePassword.fields._confirmNewPassword}
-              id='confirmPassword'
-              label='Confirm new password'
-              type='password'
-              as='password'
-              autocomplete='new-password'
-            />
-          </div>
-          <div class='flex items-center justify-end gap-2'>
-            <Dialog.Close type='button' class={cn(`
-              rounded-md border px-3 py-2 text-sm
-            `)}>
-              Close
-            </Dialog.Close>
-            <Button type='submit' disabled={changing}>
-              {changing ? 'Updating...' : 'Update password'}
-            </Button>
-          </div>
-        </form>
+        <UpdatePasswordForm {onSuccess} />
       </Tabs.Content>
     </Tabs.Root>
   </Dialog.Content>

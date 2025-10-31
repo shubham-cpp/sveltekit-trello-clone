@@ -8,12 +8,6 @@ const searchUsersSchema = z.object({
   q: z.string().trim().min(1, 'Enter at least 1 character').max(128),
 })
 
-// Invite schema
-const inviteUserSchema = z.object({
-  email: z.string().email('Enter a valid email'),
-  role: z.string().trim().min(1).default('member'),
-})
-
 /**
  * Search users NOT in the active organization
  * - excludes current user
@@ -41,30 +35,6 @@ export const searchUsersToInvite = query(searchUsersSchema, async ({ q }) => {
 /**
  * Create (or reuse) a pending invitation for the active organization
  */
-export const inviteUser = command(inviteUserSchema, async ({ email, role }) => {
-  const { locals } = getRequestEvent()
-  const userId = locals.user?.id
-
-  if (!userId) {
-    return redirect(307, '/login')
-  }
-
-  try {
-    const invite = await invitationQueries.inviteUserByEmail(userId, email, role)
-    if (!invite) {
-      return fail(400, { error: 'User is already a member or an invite already exists' })
-    }
-    return {
-      status: 201,
-      message: 'Invitation sent',
-      invitationId: invite.id,
-    }
-  }
-  catch (error) {
-    console.error('Error creating invitation:', error)
-    return fail(500, { error: 'Failed to create invitation' })
-  }
-})
 
 // Search organization members (for 'Created by' filter)
 const searchMembersSchema = z.object({
@@ -117,27 +87,6 @@ export const listPendingInvitations = query(async () => {
   catch (error) {
     console.error('Error listing pending invitations:', error)
     return fail(500, { error: 'Failed to load invitations' })
-  }
-})
-
-export const acceptInvitationRequest = command(acceptRejectSchema, async ({ invitationId }) => {
-  const { locals } = getRequestEvent()
-  const userId = locals.user?.id
-
-  if (!userId) {
-    return redirect(307, '/login')
-  }
-
-  try {
-    const ok = await invitationQueries.acceptInvitation(userId, invitationId)
-    if (!ok) {
-      return fail(400, { error: 'Invitation is no longer valid' })
-    }
-    return { success: true }
-  }
-  catch (error) {
-    console.error('Error accepting invitation:', error)
-    return fail(500, { error: 'Failed to accept invitation' })
   }
 })
 

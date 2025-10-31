@@ -2,6 +2,7 @@
   import type { ViewMode } from '$lib/utils'
   import type { PageProps } from './$types'
   import { enhance } from '$app/forms'
+  import { authClient } from '$lib/auth-client'
   import { boardSearchSchema } from '$lib/zod-schemas'
   import { useSearchParams } from 'runed/kit'
   import BoardFilters from './_components/board-filters.svelte'
@@ -10,7 +11,8 @@
   import InvitePeopleDialog from './_components/invite-people-dialog.svelte'
 
   const { data }: PageProps = $props()
-
+  const session = authClient.useSession()
+  const user = $derived($session?.data?.user || data.user)
   const params = useSearchParams(boardSearchSchema, {
     debounce: 300,
     pushHistory: false,
@@ -97,20 +99,20 @@
   <title>Dashboard Page</title>
   <meta
     name='description'
-    content={`List all the boards for ${data.user.name}`}
+    content={`List all the boards for ${user.name}`}
   />
-  <meta name='author' content={`${data.user.name} - ${data.user.email}`} />
+  <meta name='author' content={`${user.name} - ${user.email}`} />
 </svelte:head>
 
 <div class='
   mb-6
   sm:mb-8
 '>
-  <h1>Welcome Back, {data.user.name}</h1>
+  <h1>Welcome Back, {user.name}</h1>
   <p class='text-primary-foreground/80'>
     Here&apos;s what&apos;s happening with your boards today.
   </p>
-  <form method='post' id={formId} use:enhance>
+  <form action='?/createDashboard' method='post' id={formId} use:enhance>
   </form>
 
   <div class='mt-4'>

@@ -1,13 +1,14 @@
 <script lang='ts'>
   import type { User } from 'better-auth'
+  import { enhance } from '$app/forms'
+  import { cn } from '$lib/utils'
   import { Button, buttonVariants } from '$ui/button'
   import * as Dialog from '$ui/dialog/index.js'
   import { Input } from '$ui/input'
-  import { cn } from '$lib/utils'
   import PlusIcon from '@lucide/svelte/icons/plus'
   import { useDebounce } from 'runed'
   import { toast } from 'svelte-sonner'
-  import { inviteUser, searchUsersToInvite } from '../data.remote'
+  import { searchUsersToInvite } from '../data.remote'
 
   let open = $state(false)
   let search = $state('')
@@ -41,27 +42,6 @@
     debouncedSearch()
   }
 
-  async function onInvite(email: string) {
-    try {
-      const res = await inviteUser({ email, role: 'member' })
-      if ((res as any)?.status === 201) {
-        toast.success('Invitation sent')
-        open = false
-        search = ''
-        results = []
-      }
-      else if ((res as any)?.error) {
-        toast.error((res as any).error)
-      }
-      else {
-        toast.error('Failed to send invite')
-      }
-    }
-    catch (e) {
-      console.error(e)
-      toast.error('Failed to send invite')
-    }
-  }
 </script>
 
 <Dialog.Root bind:open={open}>
@@ -108,7 +88,30 @@
                     <div class='text-xs text-foreground/60'>{u.email}</div>
                   </div>
                 </div>
-                <Button size='sm' onclick={() => onInvite(u.email)}>Invite</Button>
+                <form method='POST' action='?/inviteUser' use:enhance={() => {
+                  return async ({ result, update }) => {
+                    if (result.type === 'success') {
+                      toast.success('Invitation sent')
+                      open = false
+                      search = ''
+                      results = []
+                      await update()
+                    }
+                    else if (result.type === 'failure') {
+                      const err = (result.data as any)?.error ?? 'Failed to send invite'
+                      toast.error(err)
+                      await update()
+                    }
+                    else if (result.type === 'error') {
+                      toast.error('Failed to send invite')
+                      await update()
+                    }
+                  }
+                }}>
+                  <input type='hidden' name='email' value={u.email} />
+                  <input type='hidden' name='role' value='member' />
+                  <Button size='sm' type='submit'>Invite</Button>
+                </form>
               </li>
             {/each}
           </ul>
