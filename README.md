@@ -125,56 +125,56 @@ Key highlights include drag-and-drop task management, real-time collaboration, u
 
 ### Authentication
 <div>
-  <img src="screen-shots/Login page.png" alt="Login Page" width="600"/>
+  <img src="static/screen-shots/Login page.png" alt="Login Page" width="600"/>
   <p><em>Login Page - Secure authentication with email/password and Google OAuth</em></p>
 </div>
 
 <div>
-  <img src="screen-shots/Sign up.png" alt="Sign Up Page" width="600"/>
+  <img src="static/screen-shots/Sign up.png" alt="Sign Up Page" width="600"/>
   <p><em>Sign Up Page - User registration with form validation</em></p>
 </div>
 
 ### Dashboard & Organization Management
 <div>
-  <img src="screen-shots/Dashboard page.png" alt="Dashboard Page" width="600"/>
+  <img src="static/screen-shots/Dashboard page.png" alt="Dashboard Page" width="600"/>
   <p><em>Dashboard Page - Overview of all boards and project statistics</em></p>
 </div>
 
 <div>
-  <img src="screen-shots/Switch organisation.png" alt="Switch Organization" width="600"/>
+  <img src="static/screen-shots/Switch organisation.png" alt="Switch Organization" width="600"/>
   <p><em>Organization Switching - Multi-tenant support for different workspaces</em></p>
 </div>
 
 ### Team Collaboration
 <div>
-  <img src="screen-shots/Invite people to dashboard.png" alt="Invite People" width="600"/>
+  <img src="static/screen-shots/Invite people to dashboard.png" alt="Invite People" width="600"/>
   <p><em>Team Invitations - Invite team members to join your organization</em></p>
 </div>
 
 <div>
-  <img src="screen-shots/Invitations.png" alt="Invitations Management" width="600"/>
+  <img src="static/screen-shots/Invitations.png" alt="Invitations Management" width="600"/>
   <p><em>Invitation Management - Track and manage pending invitations</em></p>
 </div>
 
 ### Project Management
 <div>
-  <img src="screen-shots/Kanban board.png" alt="Kanban Board" width="600"/>
+  <img src="static/screen-shots/Kanban board.png" alt="Kanban Board" width="600"/>
   <p><em>Kanban Board - Drag-and-drop task management with customizable columns</em></p>
 </div>
 
 <div>
-  <img src="screen-shots/Filters.png" alt="Board Filters" width="600"/>
+  <img src="static/screen-shots/Filters.png" alt="Board Filters" width="600"/>
   <p><em>Advanced Filtering - Search and filter boards by various criteria</em></p>
 </div>
 
 ### Account & Board Management
 <div>
-  <img src="screen-shots/Account management.png" alt="Account Management" width="600"/>
+  <img src="static/screen-shots/Account management.png" alt="Account Management" width="600"/>
   <p><em>Account Management - Update profile information and settings</em></p>
 </div>
 
 <div>
-  <img src="screen-shots/Deleted boards.png" alt="Deleted Boards" width="600"/>
+  <img src="static/screen-shots/Deleted boards.png" alt="Deleted Boards" width="600"/>
   <p><em>Trash Management - View and restore deleted boards</em></p>
 </div>
 
