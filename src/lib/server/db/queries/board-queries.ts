@@ -2,8 +2,52 @@ import type { Board, BoardWithColumn, UpdateBoard } from '../types'
 import { eq } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
 import { db } from '..'
+import { redis } from '../../cache'
 import { getActiveOrganizationId, getDefaultColumns } from '../helpers'
 import { board, boardColumn } from '../schema'
+
+// Cache TTL constants (in seconds)
+const BOARD_LIST_CACHE_TTL = 900 // 15 minutes
+const BOARD_CACHE_TTL = 1800 // 30 minutes
+const INVALIDATION_SET_TTL = 86400 // 24 hours
+
+/**
+ * Helper function to invalidate board caches
+ * @param organizationId The organization ID
+ * @param userId Optional user ID for targeted invalidation
+ * @param boardId Optional board ID for targeted invalidation
+ */
+async function invalidateBoardCaches(organizationId: string, userId?: string, boardId?: string) {
+  try {
+    const pipeline = redis.pipeline()
+
+    if (boardId && userId) {
+      // Invalidate specific board cache
+      pipeline.del(`boards:${organizationId}:${userId}:board:${boardId}`)
+    }
+
+    if (userId) {
+      // Invalidate user's board lists
+      pipeline.del(`boards:${organizationId}:${userId}:all:false`)
+      pipeline.del(`boards:${organizationId}:${userId}:all:true`)
+    }
+    else {
+      // Invalidate all board lists for the organization
+      const invalidationSet = `boards:${organizationId}:invalidation_set`
+      const keysToInvalidate = await redis.smembers<string[]>(invalidationSet)
+
+      if (keysToInvalidate && keysToInvalidate.length > 0) {
+        for (const key of keysToInvalidate) {
+          pipeline.del(key)
+        }
+        pipeline.del(invalidationSet)
+      }
+    }
+
+    await pipeline.exec()
+  }
+  catch {}
+}
 
 export const boardQueries = {
   async createWithDefaultColumns(
@@ -33,6 +77,9 @@ export const boardQueries = {
         .values(getDefaultColumns(newBoard.id))
         .returning()
 
+      // Invalidate user's board list cache
+      await invalidateBoardCaches(activeOrgId, userId)
+
       return { ...newBoard, columns: newColumns }
     }
     catch (error) {
@@ -59,6 +106,9 @@ export const boardQueries = {
         })
         .returning()
 
+      // Invalidate user's board list cache
+      await invalidateBoardCaches(activeOrgId, userId)
+
       return newBoard
     }
     catch (error) {
@@ -72,7 +122,18 @@ export const boardQueries = {
       if (!activeOrgId)
         return undefined
 
-      return await db.query.board.findMany({
+      // Try to get from cache first
+      const cacheKey = `boards:${activeOrgId}:${userId}:all:${onlyDeleted}`
+      try {
+        const cached = await redis.get<Board[]>(cacheKey)
+        if (cached) {
+          return cached
+        }
+      }
+      catch {}
+
+      // Get from database
+      const boards = await db.query.board.findMany({
         where: ({ organizationId, isDeleted }, { eq, and }) =>
           and(
             eq(organizationId, activeOrgId),
@@ -80,6 +141,17 @@ export const boardQueries = {
           ),
         orderBy: (_, { desc }) => desc(board.updatedAt),
       })
+
+      if (boards) {
+        try {
+          await redis.set(cacheKey, boards, { ex: BOARD_LIST_CACHE_TTL })
+          await redis.sadd(`boards:${activeOrgId}:invalidation_set`, cacheKey)
+          await redis.expire(`boards:${activeOrgId}:invalidation_set`, INVALIDATION_SET_TTL)
+        }
+        catch {}
+      }
+
+      return boards
     }
     catch (error) {
       console.error('ERROR: while `getAll` in boards.\n', error)
@@ -92,7 +164,18 @@ export const boardQueries = {
       if (!activeOrgId)
         return undefined
 
-      return await db.query.board.findFirst({
+      // Try to get from cache first
+      const cacheKey = `boards:${activeOrgId}:${userId}:board:${boardId}`
+      try {
+        const cached = await redis.get(cacheKey)
+        if (cached) {
+          return cached
+        }
+      }
+      catch {}
+
+      // Get from database
+      const board = await db.query.board.findFirst({
         where: (b, op) =>
           op.and(
             op.eq(b.id, boardId),
@@ -131,6 +214,18 @@ export const boardQueries = {
           },
         },
       })
+
+      // Cache the result if successful
+      if (board) {
+        try {
+          await redis.set(cacheKey, board, { ex: BOARD_CACHE_TTL })
+          await redis.sadd(`boards:${activeOrgId}:invalidation_set`, cacheKey)
+          await redis.expire(`boards:${activeOrgId}:invalidation_set`, INVALIDATION_SET_TTL)
+        }
+        catch {}
+      }
+
+      return board
     }
     catch (error) {
       console.error('ERROR: while `getById` in boards.\n', error)
@@ -164,6 +259,9 @@ export const boardQueries = {
         .where(eq(board.id, foundBoard.id))
         .returning()
 
+      // Invalidate caches
+      await invalidateBoardCaches(activeOrgId, userId, boardId)
+
       return updatedBoard
     }
     catch (error) {
@@ -193,6 +291,9 @@ export const boardQueries = {
         .where(eq(board.id, foundBoard.id))
         .returning()
 
+      // Invalidate caches
+      await invalidateBoardCaches(activeOrgId, userId, boardId)
+
       return updatedBoard
     }
     catch (error) {
@@ -219,6 +320,9 @@ export const boardQueries = {
         .set(updatedBoardObj)
         .where(eq(board.id, foundBoard.id))
         .returning()
+
+      // Invalidate caches
+      await invalidateBoardCaches(activeOrgId, userId, boardObj.id)
 
       return updatedBoard
     }
@@ -251,6 +355,9 @@ export const boardQueries = {
         .delete(board)
         .where(eq(board.id, foundBoard.id))
         .returning()
+
+      // Invalidate caches
+      await invalidateBoardCaches(activeOrgId, userId, boardId)
 
       return !!deleted
     }

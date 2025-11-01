@@ -25,6 +25,7 @@ Key highlights include drag-and-drop task management, real-time collaboration, u
 - **SQLite** - Lightweight, serverless database
 - **Better Auth** - Modern authentication library
 - **Drizzle Kit** - Database migration and introspection tools
+- **Upstash Redis** - Serverless Redis for high-performance caching
 
 ### UI Components & Styling
 - **Tailwind** - Utility css classes
@@ -113,6 +114,13 @@ Key highlights include drag-and-drop task management, real-time collaboration, u
 - **Activity Tracking** - Monitor board and task updates
 - **User Workspace** - Centralized view of all user projects
 
+### ⚡ Performance & Caching
+- **Redis Caching** - High-performance caching with Upstash Redis for improved response times
+- **Cache-Aside Pattern** - Intelligent caching strategy for board and task data
+- **Automatic Cache Invalidation** - Smart cache invalidation on data updates
+- **Configurable TTL** - Optimized cache expiration times for different data types
+- **Graceful Degradation** - Application continues to work even if cache is unavailable
+
 ## Screenshots
 
 ### Authentication
@@ -193,7 +201,10 @@ bun install
 ```bash
 cp .env.example .env
 ```
-Fill in the required environment variables in `.env`.
+Fill in the required environment variables in `.env`, including:
+- Database configuration (SQLite)
+- Authentication providers (Google OAuth)
+- Redis configuration (Upstash Redis URL and token)
 
 4. Set up the database:
 ```bash
