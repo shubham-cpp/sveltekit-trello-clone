@@ -1,9 +1,9 @@
 import type { Board } from '$db/types'
 import type { Actions, PageServerLoad } from './$types'
-import { boardQueries, invitationQueries, organizationStatsQueries } from '$db/queries'
-import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
+import { boardQueries, invitationQueries, organizationQueries, organizationStatsQueries } from '$db/queries'
+import { setActiveOrganizationSchema, updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
 import { fail, redirect } from '@sveltejs/kit'
-import { message, superValidate } from 'sveltekit-superforms'
+import { message, setError, superValidate } from 'sveltekit-superforms'
 import { zod4 } from 'sveltekit-superforms/adapters'
 import { z } from 'zod/v4'
 
@@ -17,7 +17,20 @@ export const load: PageServerLoad = async (events) => {
     redirect(307, '/login')
 
   try {
-    [boards, membersCount, pendingInvitesCount] = await Promise.all([boardQueries.getAll(id), organizationStatsQueries.getActiveOrganizationMemberCount(id), organizationStatsQueries.getPendingInvitationCountForUser(email || '')])
+    const res = await Promise.allSettled([
+      boardQueries.getAll(id),
+      organizationStatsQueries.getActiveOrganizationMemberCount(id),
+      organizationStatsQueries.getPendingInvitationCountForUser(email || ''),
+    ])
+    if (res[0].status === 'fulfilled') {
+      boards = res[0].value
+    }
+    if (res[1].status === 'fulfilled') {
+      membersCount = res[1].value
+    }
+    if (res[2].status === 'fulfilled') {
+      pendingInvitesCount = res[2].value
+    }
   }
   catch (error) {
     console.error('Error fetching organization member count:', error)
@@ -36,7 +49,7 @@ const acceptRejectSchema = z.object({
 })
 
 const inviteUserSchema = z.object({
-  email: z.string().email('Enter a valid email'),
+  email: z.email('Enter a valid email'),
   role: z.string().trim().min(1).default('member'),
 })
 
@@ -57,6 +70,7 @@ export const actions = {
       return fail(500, 'Unable to create board right.')
     }
   },
+
   updateProfile: async (event) => {
     const userId = event?.locals?.user?.id
 
@@ -70,6 +84,7 @@ export const actions = {
     }
     return message(form, 'Form will be updated.')
   },
+
   updatePassword: async (event) => {
     const userId = event?.locals?.user?.id
 
@@ -95,17 +110,11 @@ export const actions = {
       return fail(400, { error: 'Invalid form data' })
     }
 
-    try {
-      const ok = await invitationQueries.acceptInvitation(userId, form.data.invitationId)
-      if (!ok) {
-        return fail(400, { error: 'Invitation is no longer valid' })
-      }
-      return { success: true }
+    const ok = await invitationQueries.acceptInvitation(userId, form.data.invitationId)
+    if (!ok) {
+      return fail(400, { error: 'Invitation is no longer valid' })
     }
-    catch (error) {
-      console.error('Error accepting invitation:', error)
-      return fail(500, { error: 'Failed to accept invitation' })
-    }
+    return { success: true }
   },
 
   inviteUser: async (event) => {
@@ -120,20 +129,54 @@ export const actions = {
 
     const { email, role } = form.data
 
-    try {
-      const invite = await invitationQueries.inviteUserByEmail(userId, email, role)
-      if (!invite) {
-        return fail(400, { error: 'User is already a member or an invite already exists' })
-      }
-      return {
-        status: 201,
-        message: 'Invitation sent',
-        invitationId: invite.id,
-      }
+    const invite = await invitationQueries.inviteUserByEmail(userId, email, role)
+    if (!invite) {
+      return fail(400, { error: 'User is already a member or an invite already exists' })
     }
-    catch (error) {
-      console.error('Error creating invitation:', error)
-      return fail(500, { error: 'Failed to create invitation' })
+    return {
+      status: 201,
+      message: 'Invitation sent',
+      invitationId: invite.id,
     }
   },
+
+  rejectInvitation: async (event) => {
+    const userId = event?.locals?.user?.id
+    if (!userId)
+      redirect(307, '/login')
+
+    const form = await superValidate(event.request, zod4(acceptRejectSchema))
+    if (!form.valid) {
+      return fail(400, { error: 'Invalid form data' })
+    }
+
+    const ok = await invitationQueries.rejectInvitation(userId, form.data.invitationId)
+    if (!ok) {
+      return fail(400, { error: 'Invitation is no longer valid' })
+    }
+    return { success: true }
+  },
+
+  setActiveOrganization: async (event) => {
+    const userId = event?.locals?.user?.id
+    if (!userId)
+      redirect(307, '/login')
+    const orgId = (await event.request.formData()).get('organizationId')
+    // const form = await superValidate(event.request, zod4(setActiveOrganizationSchema))
+
+    if (!orgId) {
+      return fail(400, { error: 'noope' })
+    }
+
+    const ok = await organizationQueries.setActiveOrganization(userId, orgId.toString())
+
+    if (!ok) {
+      // setError(form, 'organizationId', 'Unable to change organization. Please try again later')
+      return fail(400, { error: 'noope' })
+    }
+
+    // Redirect back to dashboard to prevent page refresh issues with dropdown menu
+    redirect(303, '/dashboard')
+  },
+
 } satisfies Actions

@@ -1,5 +1,5 @@
 <script lang='ts'>
-  import type { invitationQueries } from '$db/queries'
+  import type { InviteItem } from '$db/queries'
   import type { SubmitFunction } from '@sveltejs/kit'
   import { enhance } from '$app/forms'
   import { Button } from '$ui/button'
@@ -7,15 +7,13 @@
   import CheckIcon from '@lucide/svelte/icons/check'
   import XIcon from '@lucide/svelte/icons/x'
   import { toast } from 'svelte-sonner'
-  import { listPendingInvitations, rejectInvitationRequest } from '../data.remote'
+  import { listPendingInvitations } from '../data.remote'
 
   const { count = 0 } = $props<{ count?: number }>()
 
-  type InviteItem = Awaited<ReturnType<typeof invitationQueries.listPendingForUser>>
-
   let open = $state(false)
   let loading = $state(false)
-  let items = $state<InviteItem>([])
+  let items = $state<InviteItem[]>([])
 
   async function refresh() {
     loading = true
@@ -39,36 +37,35 @@
     }
   })
 
-  async function onReject(id: string) {
-    try {
-      const res = await rejectInvitationRequest({ invitationId: id })
-      if ((res as any)?.success) {
+  const handleRejectEnhance: SubmitFunction = () => {
+    return async ({ result, update }) => {
+      if (result.type === 'success') {
         toast.success('Invitation declined')
         await refresh()
-        if (!items.length) {
-          open = false
-        }
+        // if (!items.length) {
+        //   open = false
+        // }
+        await update()
       }
-      else if ((res as any)?.error) {
-        toast.error((res as any).error)
+      else if (result.type === 'failure') {
+        const err = (result.data as any)?.error ?? 'Failed to decline invitation'
+        toast.error(err)
+        await update()
       }
-      else {
+      else if (result.type === 'error') {
         toast.error('Failed to decline invitation')
+        await update()
       }
-    }
-    catch (e) {
-      console.error(e)
-      toast.error('Failed to decline invitation')
     }
   }
-  const handleEnhance: SubmitFunction = () => {
+  const handleAcceptEnhance: SubmitFunction = () => {
     return async ({ result, update }) => {
       if (result.type === 'success') {
         toast.success('Invitation accepted')
         await refresh()
-        if (!items.length) {
-          open = false
-        }
+        // if (!items.length) {
+        //   open = false
+        // }
         await update()
       }
       else if (result.type === 'failure') {
@@ -126,7 +123,7 @@
               </div>
             </div>
             <div class='flex shrink-0 items-center gap-2'>
-              <form method='POST' action='?/acceptInvitation' use:enhance={handleEnhance}>
+              <form method='POST' action='?/acceptInvitation' use:enhance={handleAcceptEnhance}>
                 <input type='hidden' name='invitationId' value={inv.id} />
                 <Button size='sm' type='submit' aria-label='Accept invitation'>
                   <CheckIcon class='size-4' />
@@ -136,13 +133,16 @@
                   '>Accept</span>
                 </Button>
               </form>
-              <Button size='sm' variant='secondary' onclick={() => onReject(inv.id)} aria-label='Decline invitation'>
-                <XIcon class='size-4' />
-                <span class='
-                  ml-1 hidden
-                  sm:inline
-                '>Decline</span>
-              </Button>
+              <form method='POST' action='?/rejectInvitation' use:enhance={handleRejectEnhance}>
+                <input type='hidden' name='invitationId' value={inv.id} />
+                <Button size='sm' variant='secondary' type='submit' aria-label='Decline invitation'>
+                  <XIcon class='size-4' />
+                  <span class='
+                    ml-1 hidden
+                    sm:inline
+                  '>Decline</span>
+                </Button>
+              </form>
             </div>
           </li>
         {/each}

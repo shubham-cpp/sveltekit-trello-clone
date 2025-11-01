@@ -108,7 +108,7 @@
   mb-6
   sm:mb-8
 '>
-  <h1>Welcome Back, {user.name}</h1>
+  <h1 id='welcome-back-user'>Welcome Back, {user.name}</h1>
   <p class='text-primary-foreground/80'>
     Here&apos;s what&apos;s happening with your boards today.
   </p>

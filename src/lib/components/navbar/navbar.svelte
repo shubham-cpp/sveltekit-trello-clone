@@ -1,7 +1,9 @@
 <script lang='ts'>
+  import type { UserOrganizations } from './data.remote'
   import { page } from '$app/state'
-  import { buttonVariants } from '$ui/button'
   import { boardDetails } from '$lib/states/navbar-board-details.svelte'
+  import { buttonVariants } from '$ui/button'
+  import Skeleton from '$ui/skeleton/skeleton.svelte'
   import ArrowBigLeftDash from '@lucide/svelte/icons/arrow-big-left-dash'
   import TrashIcon from '@lucide/svelte/icons/trash'
   import TrelloIcon from '@lucide/svelte/icons/trello'
@@ -14,6 +16,10 @@
 
   const isRouteBoard = $derived(page.url.pathname.startsWith('/boards'))
   const isRouteDashboard = $derived(page.url.pathname === '/dashboard')
+  interface Props {
+    organizationInfo: Promise<UserOrganizations>
+  }
+  const { organizationInfo }: Props = $props()
 </script>
 
 <header class='
@@ -71,8 +77,17 @@
           '>Trash</span>
         </a>
       {/if}
-
-      <WorkspaceProfileMenu />
+      {#await organizationInfo}
+        <div class='flex flex-col items-center space-y-1'>
+          <Skeleton class='h-3 w-4 rounded-full' />
+          <Skeleton class='h-4 w-8' />
+        </div>
+      {:then data}
+        <WorkspaceProfileMenu organizationInfo={data} />
+      {:catch}
+        <div class='flex flex-col items-center space-y-1'>
+        </div>
+      {/await}
       <UserProfileMenu />
       <ThemeToggle />
     </div>

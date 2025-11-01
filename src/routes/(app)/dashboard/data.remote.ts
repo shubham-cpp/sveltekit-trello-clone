@@ -1,6 +1,6 @@
-import { command, getRequestEvent, query } from '$app/server'
+import { getRequestEvent, query } from '$app/server'
 import { invitationQueries, organizationQueries } from '$db/queries'
-import { fail, redirect } from '@sveltejs/kit'
+import { fail } from '@sveltejs/kit'
 import { z } from 'zod/v4'
 
 // Search schema
@@ -68,9 +68,6 @@ export const searchOrganizationMembers = query(
 )
 
 // Pending invitations: list, accept, reject
-const acceptRejectSchema = z.object({
-  invitationId: z.string().trim().min(1),
-})
 
 export const listPendingInvitations = query(async () => {
   const { locals } = getRequestEvent()
@@ -87,26 +84,5 @@ export const listPendingInvitations = query(async () => {
   catch (error) {
     console.error('Error listing pending invitations:', error)
     return fail(500, { error: 'Failed to load invitations' })
-  }
-})
-
-export const rejectInvitationRequest = command(acceptRejectSchema, async ({ invitationId }) => {
-  const { locals } = getRequestEvent()
-  const userId = locals.user?.id
-
-  if (!userId) {
-    return redirect(307, '/login')
-  }
-
-  try {
-    const ok = await invitationQueries.rejectInvitation(userId, invitationId)
-    if (!ok) {
-      return fail(400, { error: 'Invitation is no longer valid' })
-    }
-    return { success: true }
-  }
-  catch (error) {
-    console.error('Error rejecting invitation:', error)
-    return fail(500, { error: 'Failed to reject invitation' })
   }
 })

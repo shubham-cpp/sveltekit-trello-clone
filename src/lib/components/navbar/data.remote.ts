@@ -1,9 +1,9 @@
-import { command, form, getRequestEvent, query } from '$app/server'
+import { form, getRequestEvent, query } from '$app/server'
 import { organizationQueries } from '$db/queries'
 import { user as userTable } from '$db/schema'
 import { auth } from '$lib/server/auth'
 import { db } from '$lib/server/db'
-import { updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
+import { setActiveOrganizationSchema, updatePasswordSchema, updateProfileSchema } from '$lib/zod-schemas'
 import { fail, redirect } from '@sveltejs/kit'
 import { eq } from 'drizzle-orm'
 import { z } from 'zod/v4'
@@ -15,9 +15,6 @@ const updateOrganizationSchema = z.object({
   slug: z.string().trim().min(3, 'Slug must be at least 3 characters').regex(/^[a-z0-9-]+$/, 'Slug can only contain lowercase letters, numbers, and hyphens'),
 })
 
-const setActiveOrganizationSchema = z.object({
-  organizationId: z.string().min(1, 'Organization ID is required'),
-})
 export interface UserOrganizations {
   organizations: {
     id: string
@@ -157,34 +154,32 @@ export const updatePassword = form(
   },
 )
 
-export const setActiveOrganization = command(
+export const setActiveOrganization = form(
   setActiveOrganizationSchema,
   async ({ organizationId }) => {
-    const { locals } = getRequestEvent()
+    const { locals, url } = getRequestEvent()
     const userId = locals.user?.id
 
     if (!userId) {
       return fail(401, { error: 'Unauthorized' })
     }
 
-    try {
-      const success = await organizationQueries.setActiveOrganization(userId, organizationId)
+    const success = await organizationQueries.setActiveOrganization(userId, organizationId)
 
-      if (!success) {
-        return fail(403, { error: 'Failed to set active organization' })
-      }
+    if (!success) {
+      return fail(403, { error: 'Failed to set active organization' })
+    }
 
-      // Refresh the getUserOrganizations query to update the UI
-      getUserOrganizations().refresh()
-
+    // Return success response if we're already on the dashboard page
+    // This prevents unnecessary redirects that can cause state management issues
+    if (url.pathname.includes('/dashboard')) {
       return {
         status: 200,
         message: 'Active organization updated successfully',
       }
     }
-    catch (error) {
-      console.error('Error setting active organization:', error)
-      return fail(500, { error: 'Failed to set active organization' })
-    }
+
+    // Only redirect if we're not already on the dashboard
+    redirect(303, '/dashboard')
   },
 )

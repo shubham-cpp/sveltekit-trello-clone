@@ -4,6 +4,18 @@ import { db } from '..'
 import { getActiveOrganizationId } from '../helpers'
 import { invitation, member } from '../schema'
 
+export interface InviteItem {
+  id: string
+  organizationId: string
+  organizationName: string
+  organizationSlug: string
+  organizationLogo: string | null
+  role: string
+  inviterName: string | null
+  inviterEmail: string | null
+  expiresAt: Date
+}
+
 export const invitationQueries = {
   /**
    * Return users matching query `q` that are NOT members of the user's active organization.
@@ -127,17 +139,8 @@ export const invitationQueries = {
 
     return newInvite
   },
-  async listPendingForUser(userEmail: string): Promise<Array<{
-    id: string
-    organizationId: string
-    organizationName: string
-    organizationSlug: string
-    organizationLogo: string | null
-    role: string
-    inviterName: string | null
-    inviterEmail: string | null
-    expiresAt: Date
-  }>> {
+
+  async listPendingForUser(userEmail: string): Promise<InviteItem[]> {
     const normalized = (userEmail ?? '').trim().toLowerCase()
     if (!normalized)
       return []
@@ -174,79 +177,91 @@ export const invitationQueries = {
   },
 
   async acceptInvitation(userId: string, invitationId: string): Promise<boolean> {
-    return await db.transaction(async (tx) => {
+    try {
+      return await db.transaction(async (tx) => {
       // Resolve current user's email
-      const u = await tx.query.user.findFirst({
-        where: (u, { eq }) => eq(u.id, userId),
-      })
-      if (!u?.email)
-        return false
-      const normalized = u.email.trim().toLowerCase()
-
-      // Fetch invitation (must be addressed to this user and valid)
-      const inv = await tx.query.invitation.findFirst({
-        where: (i, { and, eq, gt }) => and(
-          eq(i.id, invitationId),
-          eq(i.email, normalized),
-          eq(i.status, 'pending'),
-          gt(i.expiresAt, new Date()),
-        ),
-      })
-      if (!inv)
-        return false
-
-      // Create membership if not exists
-      const existing = await tx.query.member.findFirst({
-        where: (m, { and, eq }) => and(
-          eq(m.organizationId, inv.organizationId),
-          eq(m.userId, userId),
-        ),
-      })
-
-      if (!existing) {
-        await tx.insert(member).values({
-          id: nanoid(),
-          organizationId: inv.organizationId,
-          userId,
-          role: inv.role ?? 'member',
+        const u = await tx.query.user.findFirst({
+          where: (u, { eq }) => eq(u.id, userId),
         })
-      }
+        if (!u?.email)
+          return false
+        const normalized = u.email.trim().toLowerCase()
 
-      // Mark invitation as accepted
-      await tx.update(invitation)
-        .set({ status: 'accepted' })
-        .where(eq(invitation.id, inv.id))
+        // Fetch invitation (must be addressed to this user and valid)
+        const inv = await tx.query.invitation.findFirst({
+          where: (i, { and, eq, gt }) => and(
+            eq(i.id, invitationId),
+            eq(i.email, normalized),
+            eq(i.status, 'pending'),
+            gt(i.expiresAt, new Date()),
+          ),
+        })
+        if (!inv)
+          return false
 
-      return true
-    })
+        // Create membership if not exists
+        const existing = await tx.query.member.findFirst({
+          where: (m, { and, eq }) => and(
+            eq(m.organizationId, inv.organizationId),
+            eq(m.userId, userId),
+          ),
+        })
+
+        if (!existing) {
+          await tx.insert(member).values({
+            id: nanoid(),
+            organizationId: inv.organizationId,
+            userId,
+            role: inv.role ?? 'member',
+          })
+        }
+
+        // Mark invitation as accepted
+        await tx.update(invitation)
+          .set({ status: 'accepted' })
+          .where(eq(invitation.id, inv.id))
+
+        return true
+      })
+    }
+    catch (error) {
+      console.error('ERROR: while trying to `acceptInvitation`.\n', error)
+      return false
+    }
   },
 
   async rejectInvitation(userId: string, invitationId: string): Promise<boolean> {
-    return await db.transaction(async (tx) => {
+    try {
+      return await db.transaction(async (tx) => {
       // Resolve current user's email
-      const u = await tx.query.user.findFirst({
-        where: (u, { eq }) => eq(u.id, userId),
+        const u = await tx.query.user.findFirst({
+          where: (u, { eq }) => eq(u.id, userId),
+        })
+        if (!u?.email)
+          return false
+        const normalized = u.email.trim().toLowerCase()
+
+        const inv = await tx.query.invitation.findFirst({
+          where: (i, { and, eq, gt }) => and(
+            eq(i.id, invitationId),
+            eq(i.email, normalized),
+            eq(i.status, 'pending'),
+            gt(i.expiresAt, new Date()),
+          ),
+        })
+        if (!inv)
+          return false
+
+        await tx.update(invitation)
+          .set({ status: 'rejected' })
+          .where(eq(invitation.id, inv.id))
+
+        return true
       })
-      if (!u?.email)
-        return false
-      const normalized = u.email.trim().toLowerCase()
-
-      const inv = await tx.query.invitation.findFirst({
-        where: (i, { and, eq, gt }) => and(
-          eq(i.id, invitationId),
-          eq(i.email, normalized),
-          eq(i.status, 'pending'),
-          gt(i.expiresAt, new Date()),
-        ),
-      })
-      if (!inv)
-        return false
-
-      await tx.update(invitation)
-        .set({ status: 'rejected' })
-        .where(eq(invitation.id, inv.id))
-
-      return true
-    })
+    }
+    catch (error) {
+      console.error('ERROR: while trying to `rejectInvitation`.\n', error)
+      return false
+    }
   },
 } as const

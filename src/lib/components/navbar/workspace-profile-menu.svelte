@@ -1,139 +1,150 @@
 <script lang='ts'>
   import type { UserOrganizations } from './data.remote'
-  import { invalidateAll } from '$app/navigation'
+  import { getPrefix } from '$lib/utils'
   import { Avatar, AvatarFallback, AvatarImage } from '$ui/avatar'
-  import { buttonVariants } from '$ui/button/button.svelte'
-  import * as DropdownMenu from '$ui/dropdown-menu/index.js'
-  import Skeleton from '$ui/skeleton/skeleton.svelte'
-  import { cn, getPrefix } from '$lib/utils'
+  import Button from '$ui/button/button.svelte'
   import BuildingIcon from '@lucide/svelte/icons/building'
   import CheckIcon from '@lucide/svelte/icons/check'
   import EditIcon from '@lucide/svelte/icons/edit-3'
-  import { onMount } from 'svelte'
-  import { getUserOrganizations, setActiveOrganization } from './data.remote'
+  import { onClickOutside, useEventListener } from 'runed'
+  import { setActiveOrganization } from './data.remote'
 
-  let loading = $state(true)
-  let data = $state<UserOrganizations>({ organizations: [], activeOrganizationId: undefined })
+  interface Props {
+    organizationInfo: UserOrganizations
+  }
+
+  const { organizationInfo: data }: Props = $props()
+
+  let dialogOpen = $state(false)
+
   const activeOrganization = $derived(data.organizations.find(
     org => org.id === data.activeOrganizationId,
   ))
 
-  onMount(async () => {
-    try {
-      const result = await getUserOrganizations()
-      if ('organizations' in result) {
-        data = result
+  const ownerOrgs = $derived(data.organizations.filter(org => org.isOwner))
+  const notOwnerOrgs = $derived(data.organizations.filter(org => !org.isOwner))
+
+  let container = $state<HTMLElement>()!
+
+  // To close the dialog box
+  onClickOutside(
+    () => container,
+    () => (dialogOpen = false),
+  )
+
+  useEventListener(
+    () => container,
+    'keydown',
+    ({ key }) => {
+      if (!dialogOpen)
+        return
+      if (key === 'Escape') {
+        dialogOpen = false
       }
-    }
-    catch (error) {
-      console.error('Error fetching organizations:', error)
-    }
-    finally {
-      loading = false
-    }
-  })
-
-  // Function to handle setting active organization
-  async function handleSetActive(organizationId: string) {
-    await setActiveOrganization({ organizationId })
-    const result = await getUserOrganizations()
-    if ('organizations' in result) {
-      data = result
-    }
-    invalidateAll()
-  }
-
+    },
+  )
 </script>
+<div class='relative inline-block' bind:this={container} id='dropdown-container'>
 
-{#if loading}
-  <div class='flex flex-col items-center space-y-1'>
-    <Skeleton class='h-3 w-4 rounded-full' />
-    <Skeleton class='h-4 w-8' />
+  <Button
+    id='dropdown-trigger'
+    onclick={() => (dialogOpen = !dialogOpen)}
+    variant='ghost'
+    size='icon-lg'
+    type='button'
+    aria-haspopup='menu'
+    aria-expanded={dialogOpen}
+    aria-controls='dropdown-menu'
+  >
+    <Avatar class='bg-transparent'>
+      <AvatarImage
+        src={activeOrganization?.logo}
+        alt={activeOrganization?.name}
+        class='object-cover'
+      />
+      <AvatarFallback class='bg-transparent'>
+        {getPrefix(activeOrganization?.name ?? 'Organization')}
+      </AvatarFallback>
+    </Avatar>
+  </Button>
+
+  <!-- Dropdown menu -->
+  <div
+    id='dropdown-menu'
+    role='menubar'
+    aria-labelledby='dropdown-trigger'
+    class='
+      absolute top-12 right-0 z-50 w-64 min-w-[8rem] origin-top-right
+      overflow-x-hidden overflow-y-auto rounded-md border bg-popover p-1
+      text-popover-foreground shadow-md outline-none
+      data-[state=closed]:animate-out data-[state=closed]:fade-out-0
+      data-[state=closed]:zoom-out-95
+      data-[state=open]:animate-in data-[state=open]:fade-in-0
+      data-[state=open]:zoom-in-95
+    '
+    class:hidden={!dialogOpen}
+    class:animate-in={dialogOpen}
+    class:fade-in-0={dialogOpen}
+    class:zoom-in-95={dialogOpen}
+    class:animate-out={!dialogOpen}
+    class:fade-out-0={!dialogOpen}
+    class:zoom-out-95={!dialogOpen}
+  >
+    <!-- Workspaces owned by the user, user can edit -->
+    {@render workspaceItems(ownerOrgs, 'Your workspaces', true)}
+    <!-- Workspaces user is part of, use cannot edit -->
+    {@render workspaceItems(notOwnerOrgs, 'Members workspaces')}
   </div>
-{:else if data.organizations && data.organizations.length > 0}
-  <DropdownMenu.Root>
-    <DropdownMenu.Trigger class={cn(buttonVariants({ variant: 'ghost', size: 'icon-lg' }), `
-      cursor-pointer
-    `)}>
-      <Avatar class='bg-transparent'>
-        <AvatarImage
-          src={activeOrganization?.logo}
-          alt={activeOrganization?.name}
-          class='object-cover'
-        />
-        <AvatarFallback class='bg-transparent'>
-          {getPrefix(activeOrganization?.name ?? 'Organization')}
-        </AvatarFallback>
-      </Avatar>
-    </DropdownMenu.Trigger>
-    <DropdownMenu.Content class='sm:mr-8'>
-      <DropdownMenu.Label>
-        <p class='font-semibold'>Workspaces</p>
-      </DropdownMenu.Label>
-      <DropdownMenu.Separator />
+</div>
 
-      <!-- Organizations owned by the user -->
-      {#if data.organizations.some(org => org.isOwner)}
-        <DropdownMenu.Group>
-          <DropdownMenu.Label>
-            <p class='text-xs text-muted-foreground'>Your workspaces</p>
-          </DropdownMenu.Label>
-          {#each data.organizations.filter(org => org.isOwner) as org (org.id)}
-            <DropdownMenu.Item
-              class='flex items-center justify-between'
-              onclick={() => handleSetActive(org.id)}
+{#snippet workspaceItems(orgs: UserOrganizations['organizations'], title: string, isEditable = false)}
+  {#if orgs.length > 0}
+    <div class='px-2 py-1.5 text-sm font-semibold' role='presentation'>
+      <div role='heading' aria-level='2'>{title}</div>
+    </div>
+    <div class='-mx-1 my-1 h-px bg-border' role='separator' aria-orientation='horizontal'></div>
+    <ul class='py-1 text-sm' role='menu'>
+      {#each orgs as org (org.id)}
+        <li
+          role='menuitem'
+          class='
+            relative flex cursor-default items-center gap-2 rounded-sm px-2
+            py-1.5 text-sm outline-hidden select-none
+            hover:bg-accent hover:text-accent-foreground
+          '
+        >
+          <form class='flex w-full' id={`change-org-${org.id}`} {...setActiveOrganization.for(org.id).enhance(async ({ submit }) => { await submit() })}>
+            <input type='hidden' name='organizationId' value={org.id}>
+            <button
+              class='flex w-full cursor-pointer items-center gap-2'
+              {...setActiveOrganization.for(org.id).buttonProps}
             >
-              <div class='flex items-center gap-2'>
-                <BuildingIcon class='h-4 w-4' />
-                <span>{org.name}</span>
-              </div>
-              <div class='flex items-center gap-2'>
-                {#if org.id === data.activeOrganizationId}
-                  <CheckIcon class='h-4 w-4 text-green-500' />
-                {/if}
+              <BuildingIcon class='size-4' />
+              <span>{org.name}</span>
+            </button>
+            <div class='flex items-center gap-2'>
+              {#if org.id === data.activeOrganizationId}
+                <CheckIcon class='size-4 text-green-500' />
+              {/if}
+              {#if isEditable}
                 <EditIcon
                   class='
-                    h-4 w-4 cursor-pointer text-muted-foreground
+                    size-4 cursor-pointer text-muted-foreground
                     hover:text-foreground
                   '
                   onclick={(e) => {
                     e.stopPropagation()
                   // TODO: implement this
-                    // openEditDialog(org)
                   }}
                 />
-              </div>
-            </DropdownMenu.Item>
-          {/each}
-        </DropdownMenu.Group>
-        <DropdownMenu.Separator />
-      {/if}
-
-      <!-- Organizations the user is a member of but doesn't own -->
-      {#if data.organizations.some(org => !org.isOwner)}
-        <DropdownMenu.Group>
-          <DropdownMenu.Label>
-            <p class='text-xs text-muted-foreground'>Member workspaces</p>
-          </DropdownMenu.Label>
-          {#each data.organizations.filter(org => !org.isOwner) as org (org.id)}
-            <DropdownMenu.Item
-              class='flex items-center justify-between'
-              onclick={() => handleSetActive(org.id)}
-            >
-              <div class='flex items-center gap-2'>
-                <BuildingIcon class='h-4 w-4' />
-                <span>{org.name}</span>
-              </div>
-              {#if org.id === data.activeOrganizationId}
-                <CheckIcon class='h-4 w-4 text-green-500' />
               {/if}
-            </DropdownMenu.Item>
-          {/each}
-        </DropdownMenu.Group>
-      {/if}
-    </DropdownMenu.Content>
-  </DropdownMenu.Root>
-{/if}
+            </div>
+          </form>
+        </li>
+      {/each}
+    </ul>
+  {/if}
+{/snippet}
 
 <!-- Edit workspace dialog -->
 <!-- {#if showEditDialog && selectedOrganization}

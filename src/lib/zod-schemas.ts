@@ -120,3 +120,7 @@ export const boardSearchSchema = z.object({
   sort_dir: z.enum(['asc', 'desc']).default('desc'),
   view: z.enum(['grid', 'list']).default('grid'),
 })
+
+export const setActiveOrganizationSchema = z.object({
+  organizationId: z.string().trim(),
+})

@@ -10,10 +10,10 @@
   import { toast } from 'svelte-sonner'
   import { searchUsersToInvite } from '../data.remote'
 
-  let open = $state(false)
   let search = $state('')
   let isSearching = $state(false)
   let results = $state<Array<Pick<User, 'id' | 'name' | 'email' | 'image'>>>([])
+  let open = $state(false)
 
   const debouncedSearch = useDebounce(
     async () => {
@@ -44,7 +44,7 @@
 
 </script>
 
-<Dialog.Root bind:open={open}>
+<Dialog.Root bind:open>
   <Dialog.Trigger class={cn(buttonVariants({ variant: 'outline' }))} aria-label='Invite people'>
     <PlusIcon />
     Invite people

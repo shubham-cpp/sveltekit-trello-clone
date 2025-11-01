@@ -73,9 +73,9 @@ export const boardQueries = {
         return undefined
 
       return await db.query.board.findMany({
-        where: ({ userId: dbUserId, organizationId, isDeleted }, { eq, and, or }) =>
+        where: ({ organizationId, isDeleted }, { eq, and }) =>
           and(
-            or(eq(dbUserId, userId), eq(organizationId, activeOrgId)),
+            eq(organizationId, activeOrgId),
             eq(isDeleted, onlyDeleted),
           ),
         orderBy: (_, { desc }) => desc(board.updatedAt),
