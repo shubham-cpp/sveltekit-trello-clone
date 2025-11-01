@@ -1,0 +1,1 @@
+DROP INDEX `task_board_column_id_sort_order_unique`;

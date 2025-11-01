@@ -8,6 +8,13 @@
       "when": 1761561917605,
       "tag": "0000_mixed_landau",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1761986073188,
+      "tag": "0001_parched_darkstar",
+      "breakpoints": true
     }
   ]
 }

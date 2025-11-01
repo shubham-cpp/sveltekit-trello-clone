@@ -1,5 +1,6 @@
 import type { MoveTaskColumnSchema, UpdateTaskSortOrderSchema } from '$lib/zod-schemas'
 import type { BoardTask, UpdateTask } from '../types'
+import { getActiveOrganizationId } from '$db/helpers'
 import { and, eq, inArray, sql } from 'drizzle-orm'
 import { isNotNil, pickBy } from 'es-toolkit'
 import { db } from '..'
@@ -69,10 +70,18 @@ export const taskQueries = {
     >,
   ): Promise<undefined | BoardTask> {
     try {
+      const activeOrganizationId = await getActiveOrganizationId(userId)
+      if (!activeOrganizationId)
+        return undefined
+
       // First check if the user owns the board
       const foundBoard = await db.query.board.findFirst({
-        where: ({ userId: dbUserId, id, isDeleted }, { eq, and }) =>
-          and(eq(dbUserId, userId), eq(id, boardId), eq(isDeleted, false)),
+        where: ({ organizationId, id, isDeleted }, { eq, and }) =>
+          and(
+            eq(id, boardId),
+            eq(organizationId, activeOrganizationId),
+            eq(isDeleted, false),
+          ),
       })
 
       if (!foundBoard)
@@ -171,11 +180,15 @@ export const taskQueries = {
     newSortOrder: MoveTaskColumnSchema['newSortOrder'],
   ): Promise<boolean> {
     try {
+      const activeOrganizationId = await getActiveOrganizationId(userId)
+      if (!activeOrganizationId)
+        return false
+
       const res = await db.transaction(async (tx) => {
         const found = await tx.query.board.findFirst({
           where: (b, op) => op.and(
             op.eq(b.id, boardId),
-            op.eq(b.userId, userId),
+            op.eq(b.organizationId, activeOrganizationId),
             op.eq(b.isDeleted, false),
           ),
           with: {
@@ -236,11 +249,15 @@ export const taskQueries = {
     if (newSortOrder.length === 0)
       return undefined
     try {
+      const activeOrganizationId = await getActiveOrganizationId(userId)
+      if (!activeOrganizationId)
+        return undefined
+
       const res = await db.transaction(async (tx) => {
         const found = await tx.query.board.findFirst({
           where: (b, op) => op.and(
             op.eq(b.id, boardId),
-            op.eq(b.userId, userId),
+            op.eq(b.organizationId, activeOrganizationId),
             op.eq(b.isDeleted, false),
           ),
           with: {
