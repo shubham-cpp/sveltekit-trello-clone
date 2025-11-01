@@ -2,19 +2,19 @@
   import { page } from '$app/state'
   import GoogleSignInButton from '$lib/components/navbar/google-sign-in-button.svelte'
   import Logo from '$lib/components/navbar/logo.svelte'
-  import { buttonVariants } from '$ui/button'
   import { cn } from '$lib/utils'
+  import { buttonVariants } from '$ui/button'
 
   const isLoginRoute = $derived(page.url.pathname === '/login')
 
   const { children } = $props()
 </script>
 
-<section class='
+<section class={[`
   flex min-h-screen bg-zinc-50 px-4 py-16
-  md:py-32
   dark:bg-transparent
-'>
+`, isLoginRoute && `md:py-32`]}
+>
   <div
     class='
       m-auto h-fit w-full max-w-sm rounded-[calc(var(--radius)+.125rem)] border
